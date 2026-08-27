@@ -11,7 +11,6 @@ export default function TelaPrincipal({ navigation }) {
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
-  // Recarrega toda vez que a tela fica em foco (ex: ao voltar do formulário)
   useFocusEffect(
     useCallback(() => {
       carregarHistorico();
@@ -30,7 +29,6 @@ export default function TelaPrincipal({ navigation }) {
     }
   }
 
-  // Formata "2026-01-23T00:00:00" → "23/01/2026"
   function formatarData(dataStr) {
     if (!dataStr) return '—';
     const d = new Date(dataStr);
@@ -38,7 +36,6 @@ export default function TelaPrincipal({ navigation }) {
     return d.toLocaleDateString('pt-BR');
   }
 
-  // Cor do aproveitamento: verde ≥ 60%, amarelo ≥ 40%, vermelho abaixo
   function corAproveitamento(valor) {
     if (valor >= 60) return '#4CAF50';
     if (valor >= 40) return '#FF9800';
@@ -71,17 +68,15 @@ export default function TelaPrincipal({ navigation }) {
               >
                 <View style={estilos.cardHeader}>
                   <View style={{ flex: 1 }}>
-                    {/* Mostra a aula se tiver, ou "Treino livre" */}
                     <Text style={estilos.textoCardPrincipal}>
                       {item.numero_aula
                         ? `Semana ${item.semana} — Aula ${item.numero_aula}`
                         : 'Treino livre'}
                     </Text>
                     <Text style={estilos.textoCardSecundario}>
-                      {formatarData(item.data_reg || null)}
+                      {formatarData(item.data_registro)}
                     </Text>
                   </View>
-                  {/* Badge de aproveitamento */}
                   <View style={[estilos.badge, { backgroundColor: corAproveitamento(item.aproveitamento) }]}>
                     <Text style={estilos.textoBadge}>{item.aproveitamento}%</Text>
                   </View>
@@ -90,7 +85,7 @@ export default function TelaPrincipal({ navigation }) {
                 <View style={estilos.cardStats}>
                   <Text style={estilos.statTexto}>🏀 {item.tentativas} arremessos</Text>
                   <Text style={estilos.statTexto}>✓ {item.acertos} acertos</Text>
-                  {item.tempo && <Text style={estilos.statTexto}>⏱ {item.tempo}</Text>}
+                  {!!item.tempo && <Text style={estilos.statTexto}>⏱ {item.tempo}</Text>}
                 </View>
               </TouchableOpacity>
             ))
@@ -98,10 +93,9 @@ export default function TelaPrincipal({ navigation }) {
         </ScrollView>
       )}
 
-      {/* Botão flutuante para novo relatório */}
       <TouchableOpacity
         style={estilos.fab}
-        onPress={() => navigation.navigate('TelaConectar')}
+        onPress={() => navigation.navigate('TelaFormularioRelatorio')}
       >
         <MaterialIcons name="add" size={35} color="#FFF" />
       </TouchableOpacity>

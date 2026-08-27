@@ -48,7 +48,7 @@ CREATE TABLE RegistroAproveitamento (
     tentativas INT DEFAULT 0,
     acertos INT DEFAULT 0,
     aproveitamento DECIMAL(5,2) DEFAULT 0,
-    tempo TIME,
+    tempo VARCHAR(10) DEFAULT NULL,
     id_jogador INT NOT NULL,
     id_aula INT,
     data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

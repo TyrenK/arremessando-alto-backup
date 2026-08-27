@@ -46,19 +46,19 @@ export default function TelaTreino({ route }) {
   }
 
   async function marcarAulaComoFeita(aula) {
-    if (aulaRealizada(aula.numero_aula)) return;
+    if (aulaRealizada(aula.id_aula)) return;
 
     try {
       await api.put('/aulas/progresso', {
         semana_ult_aula: semana,
         dia_ult_aula: aula.dia,
-        ult_aula_realizada: aula.numero_aula,
+        ult_aula_realizada: aula.id_aula,
       });
 
       setProgresso({
         semana_ult_aula: semana,
         dia_ult_aula: aula.dia,
-        ult_aula_realizada: aula.numero_aula,
+        ult_aula_realizada: aula.id_aula,
       });
 
       Alert.alert('Boa! 🏀', 'Aula marcada como concluída!');
@@ -69,7 +69,7 @@ export default function TelaTreino({ route }) {
 
   // ── TELA DE DETALHE DA AULA ──────────────────────────────────────────────────
   if (aulaSelecionada) {
-    const feita = aulaRealizada(aulaSelecionada.numero_aula);
+    const feita = aulaRealizada(aulaSelecionada.id_aula);
 
     return (
       <GradientWrapper style={estilos.tela}>
@@ -80,7 +80,7 @@ export default function TelaTreino({ route }) {
           </TouchableOpacity>
 
           <Text style={estilos.detalheTitulo}>
-            {aulaSelecionada.titulo || `Dia ${aulaSelecionada.dia} — Aula ${aulaSelecionada.numero_aula}`}
+            {aulaSelecionada.titulo || `Dia ${aulaSelecionada.dia} — Aula ${aulaSelecionada.id_aula}`}
           </Text>
 
           {aulaSelecionada.pratica && (
@@ -132,7 +132,7 @@ export default function TelaTreino({ route }) {
 
   // ── LISTA DE AULAS DA SEMANA ─────────────────────────────────────────────────
   function renderAula({ item }) {
-  const feita = aulaRealizada(item.numero_aula);
+  const feita = aulaRealizada(item.id_aula);
 
   return (
     <TouchableOpacity
@@ -142,7 +142,7 @@ export default function TelaTreino({ route }) {
     >
       <View style={estilos.linhaHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={estilos.textoDia}>Dia {item.dia} — Aula {item.numero_aula}</Text>
+          <Text style={estilos.textoDia}>Dia {item.dia} — Aula {item.id_aula}</Text>
           {!!item.titulo && <Text style={estilos.tituloAula}>{item.titulo}</Text>}
         </View>
         <View style={estilos.icones}>

@@ -1,22 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function NavegacaoInferior() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.areaNavegacao}>
-      {/* Botão Treino */}
+    <View style={[styles.areaNavegacao, { paddingBottom: insets.bottom + 10 }]}>
       <TouchableOpacity 
         style={styles.itemNavegacao} 
-        onPress={() => navigation.navigate('TelaHome')} // Geralmente o treino principal é a Home/Inicial
+        onPress={() => navigation.navigate('TelaHome')}
       >
         <Image source={require('../assets/treino.png')} style={styles.icone} />
         <Text style={styles.textoItem}>Treino</Text>
       </TouchableOpacity>
 
-      {/* Botão Relatório */}
       <TouchableOpacity 
         style={styles.itemNavegacao} 
         onPress={() => navigation.navigate('TelaPrincipalRelatorio')}
@@ -25,7 +25,6 @@ export default function NavegacaoInferior() {
         <Text style={styles.textoItem}>Relatório</Text>
       </TouchableOpacity>
 
-      {/* Botão Perfil */}
       <TouchableOpacity 
         style={styles.itemNavegacao} 
         onPress={() => navigation.navigate('TelaPerfil')}
@@ -43,7 +42,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#420404',
     justifyContent: 'space-around',
     paddingVertical: 15,
-    paddingBottom: 20,
   },
   itemNavegacao: {
     alignItems: 'center',
