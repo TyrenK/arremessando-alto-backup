@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CircularProgress from 'react-native-circular-progress-indicator';
+import CORES from '../styles/cores';
 
 export default function Gauges({ scores, tempoRestante, tempoLabel }) {
   return (
@@ -9,12 +10,12 @@ export default function Gauges({ scores, tempoRestante, tempoLabel }) {
         <CircularProgress
           value={tempoRestante}
           radius={60}
-          activeStrokeColor={'#700000'}
+          activeStrokeColor={CORES.primaria}
           inActiveStrokeColor={'rgba(255,255,255,0.1)'}
-          textColor={'#FFF'}
+          textColor={CORES.branco}
           title={tempoLabel}
-          titleColor={'#FFF'}
-          titleStyle={{ fontSize: 14 }}
+          titleColor={CORES.branco}
+          titleStyle={estilos.tituloGauge}
           showProgressValue={false}
         />
         <Text style={estilos.label}>Tempo Restante</Text>
@@ -25,10 +26,10 @@ export default function Gauges({ scores, tempoRestante, tempoLabel }) {
           value={scores}
           radius={60}
           title={'%'}
-          titleColor={'#FFF'}
-          activeStrokeColor={'#2ECC71'}
+          titleColor={CORES.branco}
+          activeStrokeColor={CORES.sucesso}
           inActiveStrokeColor={'rgba(255,255,255,0.1)'}
-          textColor={'#FFF'}
+          textColor={CORES.branco}
         />
         <Text style={estilos.label}>Aproveitamento</Text>
       </View>
@@ -49,8 +50,11 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     width: '48%',
   },
+  tituloGauge: {
+    fontSize: 14,
+  },
   label: {
-    color: '#FFF',
+    color: CORES.branco,
     marginTop: 10,
     fontSize: 14,
   },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   FlatList, ActivityIndicator, Alert, ScrollView
@@ -7,6 +7,7 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import GradientWrapper from '../../components/GradientWrapper';
 import NavegacaoInferior from '../../components/NavegacaoInferior';
 import api from '../../config/api';
+import CORES from '../../styles/cores';
 
 export default function TelaTreino({ route }) {
   const { semana } = route.params;
@@ -46,19 +47,19 @@ export default function TelaTreino({ route }) {
   }
 
   async function marcarAulaComoFeita(aula) {
-    if (aulaRealizada(aula.id_aula)) return;
+    if (aulaRealizada(aula.numero_aula)) return;
 
     try {
       await api.put('/aulas/progresso', {
         semana_ult_aula: semana,
         dia_ult_aula: aula.dia,
-        ult_aula_realizada: aula.id_aula,
+        ult_aula_realizada: aula.numero_aula,
       });
 
       setProgresso({
         semana_ult_aula: semana,
         dia_ult_aula: aula.dia,
-        ult_aula_realizada: aula.id_aula,
+        ult_aula_realizada: aula.numero_aula,
       });
 
       Alert.alert('Boa! 🏀', 'Aula marcada como concluída!');
@@ -67,9 +68,35 @@ export default function TelaTreino({ route }) {
     }
   }
 
+  // Definida fora do return para evitar recriação desnecessária
+  const renderAula = useCallback(({ item }) => {
+    const feita = aulaRealizada(item.numero_aula);
+
+    return (
+
+      <TouchableOpacity
+        style={[estilos.caixaDia, feita && estilos.caixaFeita]}
+        onPress={() => setAulaSelecionada(item)}
+        activeOpacity={0.8}
+      >
+        <View style={estilos.linhaHeader}>
+          <View style={estilos.textoContainer}>
+            <Text style={estilos.textoDia}>Dia {item.dia} — Aula {item.numero_aula}</Text>
+            {!!item.titulo && <Text style={estilos.tituloAula}>{item.titulo}</Text>}
+          </View>
+          <View style={estilos.icones}>
+            {!!item.youtube_id && <Text style={estilos.iconeVideo}>▶</Text>}
+            {!!feita && <Text style={estilos.iconeFeito}>✓</Text>}
+            <Text style={estilos.setinha}>›</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }, [progresso]);
+
   // ── TELA DE DETALHE DA AULA ──────────────────────────────────────────────────
   if (aulaSelecionada) {
-    const feita = aulaRealizada(aulaSelecionada.id_aula);
+    const feita = aulaRealizada(aulaSelecionada.numero_aula);
 
     return (
       <GradientWrapper style={estilos.tela}>
@@ -80,23 +107,18 @@ export default function TelaTreino({ route }) {
           </TouchableOpacity>
 
           <Text style={estilos.detalheTitulo}>
-            {aulaSelecionada.titulo || `Dia ${aulaSelecionada.dia} — Aula ${aulaSelecionada.id_aula}`}
+            {aulaSelecionada.titulo || `Dia ${aulaSelecionada.dia} — Aula ${aulaSelecionada.numero_aula}`}
           </Text>
 
-          {aulaSelecionada.pratica && (
+          {!!aulaSelecionada.pratica && (
             <View style={estilos.badgePratica}>
               <Text style={estilos.textoBadge}>🏀 Aula prática</Text>
             </View>
           )}
 
-          {/* Player YouTube — só aparece se tiver youtube_id cadastrado */}
           {aulaSelecionada.youtube_id ? (
             <View style={estilos.playerContainer}>
-              <YoutubePlayer
-                height={220}
-                videoId={aulaSelecionada.youtube_id}
-                play={false}
-              />
+              <YoutubePlayer height={220} videoId={aulaSelecionada.youtube_id} play={false} />
             </View>
           ) : (
             <View style={estilos.semVideo}>
@@ -131,36 +153,12 @@ export default function TelaTreino({ route }) {
   }
 
   // ── LISTA DE AULAS DA SEMANA ─────────────────────────────────────────────────
-  function renderAula({ item }) {
-  const feita = aulaRealizada(item.id_aula);
-
-  return (
-    <TouchableOpacity
-      style={[estilos.caixaDia, feita && estilos.caixaFeita]}
-      onPress={() => setAulaSelecionada(item)}
-      activeOpacity={0.8}
-    >
-      <View style={estilos.linhaHeader}>
-        <View style={{ flex: 1 }}>
-          <Text style={estilos.textoDia}>Dia {item.dia} — Aula {item.id_aula}</Text>
-          {!!item.titulo && <Text style={estilos.tituloAula}>{item.titulo}</Text>}
-        </View>
-        <View style={estilos.icones}>
-          {!!item.youtube_id && <Text style={estilos.iconeVideo}>▶</Text>}
-          {!!feita && <Text style={estilos.iconeFeito}>✓</Text>}
-          <Text style={estilos.setinha}>›</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
   return (
     <GradientWrapper style={estilos.tela}>
       <View style={estilos.conteudo}>
         <Text style={estilos.titulo}>Semana {semana}</Text>
         {carregando ? (
-          <ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={CORES.branco} style={estilos.loading} />
         ) : aulas.length === 0 ? (
           <Text style={estilos.textoVazio}>Nenhuma aula cadastrada para esta semana.</Text>
         ) : (
@@ -169,7 +167,7 @@ export default function TelaTreino({ route }) {
             keyExtractor={(item) => String(item.id_aula)}
             renderItem={renderAula}
             estimatedItemSize={80}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={estilos.listaConteudo}
           />
         )}
       </View>
@@ -181,31 +179,34 @@ export default function TelaTreino({ route }) {
 const estilos = StyleSheet.create({
   tela: { flex: 1 },
   conteudo: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
-  titulo: { fontSize: 24, color: '#fff', fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  caixaDia: { backgroundColor: '#fff', padding: 20, borderRadius: 10, marginBottom: 10 },
-  caixaFeita: { backgroundColor: '#E8F5E9', borderLeftWidth: 4, borderLeftColor: '#4CAF50' },
+  loading: { marginTop: 40 },
+  titulo: { fontSize: 24, color: CORES.branco, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  listaConteudo: { paddingBottom: 20 },
+  caixaDia: { backgroundColor: CORES.branco, padding: 20, borderRadius: 10, marginBottom: 10 },
+  caixaFeita: { backgroundColor: CORES.sucessoFundo, borderLeftWidth: 4, borderLeftColor: CORES.sucesso },
   linhaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  textoContainer: { flex: 1 },
   textoDia: { fontSize: 16, fontWeight: 'bold' },
-  tituloAula: { fontSize: 13, color: '#555', marginTop: 3 },
+  tituloAula: { fontSize: 13, color: CORES.textoDesabilitado, marginTop: 3 },
   icones: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  iconeVideo: { color: '#700000', fontSize: 14, fontWeight: 'bold' },
-  iconeFeito: { color: '#4CAF50', fontSize: 16, fontWeight: 'bold' },
-  setinha: { fontSize: 20, color: '#aaa', marginLeft: 4 },
-  textoVazio: { color: '#fff', textAlign: 'center', marginTop: 40, fontSize: 16, fontStyle: 'italic' },
+  iconeVideo: { color: CORES.primaria, fontSize: 14, fontWeight: 'bold' },
+  iconeFeito: { color: CORES.sucesso, fontSize: 16, fontWeight: 'bold' },
+  setinha: { fontSize: 20, color: CORES.cinzaMedio, marginLeft: 4 },
+  textoVazio: { color: CORES.branco, textAlign: 'center', marginTop: 40, fontSize: 16, fontStyle: 'italic' },
   detalheScroll: { paddingHorizontal: 20, paddingBottom: 30, paddingTop: 60 },
   btnVoltar: { marginBottom: 16 },
-  txtVoltar: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  detalheTitulo: { fontSize: 22, color: '#fff', fontWeight: 'bold', marginBottom: 12 },
+  txtVoltar: { color: CORES.branco, fontSize: 16, fontWeight: 'bold' },
+  detalheTitulo: { fontSize: 22, color: CORES.branco, fontWeight: 'bold', marginBottom: 12 },
   badgePratica: { backgroundColor: '#FFF3E0', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', marginBottom: 14 },
   textoBadge: { fontSize: 12, color: '#E65100', fontWeight: 'bold' },
   playerContainer: { borderRadius: 12, overflow: 'hidden', marginBottom: 20 },
   semVideo: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, height: 120, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  textoSemVideo: { color: '#fff', fontSize: 15 },
-  descricaoContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 18, marginBottom: 20 },
-  labelDescricao: { fontSize: 14, fontWeight: 'bold', color: '#700000', marginBottom: 8 },
-  textoDescricao: { fontSize: 14, color: '#333', lineHeight: 22 },
-  botaoConcluir: { backgroundColor: '#700000', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-  textoBotao: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  concluidoContainer: { backgroundColor: '#E8F5E9', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-  textoConcluido: { color: '#4CAF50', fontWeight: 'bold', fontSize: 15 },
+  textoSemVideo: { color: CORES.branco, fontSize: 15 },
+  descricaoContainer: { backgroundColor: CORES.branco, borderRadius: 12, padding: 18, marginBottom: 20 },
+  labelDescricao: { fontSize: 14, fontWeight: 'bold', color: CORES.primaria, marginBottom: 8 },
+  textoDescricao: { fontSize: 14, color: CORES.textoMedio, lineHeight: 22 },
+  botaoConcluir: { backgroundColor: CORES.primaria, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
+  textoBotao: { color: CORES.branco, fontWeight: 'bold', fontSize: 15 },
+  concluidoContainer: { backgroundColor: CORES.sucessoFundo, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
+  textoConcluido: { color: CORES.sucesso, fontWeight: 'bold', fontSize: 15 },
 });

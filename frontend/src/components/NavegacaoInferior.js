@@ -2,44 +2,45 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CORES from '../styles/cores';
 
 export default function NavegacaoInferior() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.areaNavegacao, { paddingBottom: insets.bottom + 10 }]}>
-      <TouchableOpacity 
-        style={styles.itemNavegacao} 
-        onPress={() => navigation.navigate('TelaHome')}
+    <View style={[estilos.areaNavegacao, { paddingBottom: insets.bottom + 10 }]}>
+      <TouchableOpacity
+        style={estilos.itemNavegacao}
+        onPress={() => navigation.navigate('TelaSemanas')}
       >
-        <Image source={require('../assets/treino.png')} style={styles.icone} />
-        <Text style={styles.textoItem}>Treino</Text>
+        <Image source={require('../assets/treino.png')} style={estilos.icone} />
+        <Text style={estilos.textoItem}>Treino</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.itemNavegacao} 
-        onPress={() => navigation.navigate('TelaPrincipalRelatorio')}
+      <TouchableOpacity
+        style={estilos.itemNavegacao}
+        onPress={() => navigation.navigate('TelaHistoricoTreinos')}
       >
-        <Image source={require('../assets/relatorio.png')} style={styles.icone} />
-        <Text style={styles.textoItem}>Relatório</Text>
+        <Image source={require('../assets/relatorio.png')} style={estilos.icone} />
+        <Text style={estilos.textoItem}>Relatório</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.itemNavegacao} 
+      <TouchableOpacity
+        style={estilos.itemNavegacao}
         onPress={() => navigation.navigate('TelaPerfil')}
       >
-        <Image source={require('../assets/perfil.png')} style={styles.icone} />
-        <Text style={styles.textoItem}>Perfil</Text>
+        <Image source={require('../assets/perfil.png')} style={estilos.icone} />
+        <Text style={estilos.textoItem}>Perfil</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const estilos = StyleSheet.create({
   areaNavegacao: {
     flexDirection: 'row',
-    backgroundColor: '#420404',
+    backgroundColor: CORES.primariaNavegacao,
     justifyContent: 'space-around',
     paddingVertical: 15,
   },
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   textoItem: {
-    color: '#fff',
+    color: CORES.branco,
     fontWeight: 'bold',
     fontSize: 13,
   },

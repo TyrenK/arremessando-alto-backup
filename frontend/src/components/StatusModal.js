@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import CORES from '../styles/cores';
 
 export default function StatusModal({ visible, onRetry, onLater }) {
   return (
@@ -33,16 +34,16 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#3a0000',
+    backgroundColor: CORES.primariaEscura,
     padding: 30,
     borderRadius: 20,
     width: '85%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#700000',
+    borderColor: CORES.primaria,
   },
   modalTitulo: {
-    color: '#FFF',
+    color: CORES.branco,
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 12,
@@ -55,7 +56,7 @@ const estilos = StyleSheet.create({
     lineHeight: 22,
   },
   btnTentar: {
-    backgroundColor: '#700000',
+    backgroundColor: CORES.primaria,
     padding: 15,
     borderRadius: 12,
     width: '100%',
@@ -70,7 +71,7 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
   },
   textoBotao: {
-    color: '#FFF',
+    color: CORES.branco,
     fontWeight: 'bold',
     fontSize: 16,
   },

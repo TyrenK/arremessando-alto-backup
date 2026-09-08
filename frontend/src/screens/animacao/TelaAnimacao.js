@@ -6,7 +6,7 @@ import GradientWrapper from '../../components/GradientWrapper';
 // Tela de animação de entrada do app
 export default function TelaAnimacao({ navigation }) {
   
-  const opacidade = useSharedValue(1);
+  const opacidade = useSharedValue(0);
   const escala = useSharedValue(0.5);
 
   useEffect(() => {

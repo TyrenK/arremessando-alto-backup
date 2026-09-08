@@ -4,8 +4,7 @@ import GradientWrapper from '../../components/GradientWrapper';
 import estilosGlobais from '../../styles/styles';
 import NavegacaoInferior from '../../components/NavegacaoInferior';
 
-export default function TelaDetalhesCard({ route, navigation }) {
-  // Recebe o registro completo vindo da TelaPrincipal
+export default function TelaDetalhesTreino({ route, navigation }) {
   const { registro } = route.params;
 
   function formatarData(dataStr) {
@@ -21,9 +20,9 @@ export default function TelaDetalhesCard({ route, navigation }) {
     return '#E53935';
   }
 
-  const tituloTreino = registro.numero_aula
+  const tituloTreino = registro.titulo || (registro.numero_aula
     ? `Semana ${registro.semana} — Aula ${registro.numero_aula}`
-    : 'Treino livre';
+    : 'Treino livre');
 
   return (
     <GradientWrapper style={estilos.tela}>
@@ -36,16 +35,13 @@ export default function TelaDetalhesCard({ route, navigation }) {
       <ScrollView contentContainerStyle={estilos.scrollContent}>
         <View style={estilos.card}>
 
-          {/* Voltar */}
           <TouchableOpacity onPress={() => navigation.goBack()} style={estilos.btnVoltar}>
             <Text style={estilos.txtVoltar}>← Voltar</Text>
           </TouchableOpacity>
 
-          {/* Título e data */}
           <Text style={estilos.treinoTitulo}>{tituloTreino}</Text>
-          <Text style={estilos.dataTexto}>{formatarData(registro.data_reg || null)}</Text>
+          <Text style={estilos.dataTexto}>{formatarData(registro.data_registro)}</Text>
 
-          {/* Badge de aproveitamento grande */}
           <View style={[estilos.badgeGrande, { backgroundColor: corAproveitamento(registro.aproveitamento) }]}>
             <Text style={estilos.badgeTexto}>{registro.aproveitamento}%</Text>
             <Text style={estilos.badgeSubtexto}>aproveitamento</Text>
@@ -53,7 +49,6 @@ export default function TelaDetalhesCard({ route, navigation }) {
 
           <View style={estilos.divisor} />
 
-          {/* Estatísticas */}
           <View style={estilos.statsContainer}>
             <View style={estilos.linhaEstat}>
               <Text style={estilos.label}>Arremessos:</Text>
@@ -67,9 +62,9 @@ export default function TelaDetalhesCard({ route, navigation }) {
               <Text style={estilos.label}>Erros:</Text>
               <Text style={estilos.valor}>{registro.tentativas - registro.acertos}</Text>
             </View>
-            {registro.tempo && (
+            {!!registro.tempo && (
               <View style={estilos.linhaEstat}>
-                <Text style={estilos.label}>Tempo:</Text>
+                <Text style={estilos.label}>Duração:</Text>
                 <Text style={estilos.valor}>{registro.tempo}</Text>
               </View>
             )}
@@ -86,19 +81,12 @@ export default function TelaDetalhesCard({ route, navigation }) {
 const estilos = StyleSheet.create({
   tela: { flex: 1, paddingTop: 50 },
   scrollContent: { alignItems: 'center', paddingTop: 10, paddingBottom: 100 },
-  card: {
-    backgroundColor: '#FFF', width: '90%', borderRadius: 20,
-    padding: 25, elevation: 5,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2, shadowRadius: 4,
-  },
+  card: { backgroundColor: '#FFF', width: '90%', borderRadius: 20, padding: 25, elevation: 5 },
   btnVoltar: { marginBottom: 16 },
   txtVoltar: { color: '#700000', fontSize: 15, fontWeight: 'bold' },
   treinoTitulo: { fontSize: 22, fontWeight: 'bold', color: '#000', marginBottom: 4 },
   dataTexto: { fontSize: 15, color: '#666', marginBottom: 20 },
-  badgeGrande: {
-    borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 20,
-  },
+  badgeGrande: { borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 20 },
   badgeTexto: { color: '#fff', fontSize: 36, fontWeight: 'bold' },
   badgeSubtexto: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 2 },
   divisor: { height: 1, backgroundColor: '#EEE', marginBottom: 16 },

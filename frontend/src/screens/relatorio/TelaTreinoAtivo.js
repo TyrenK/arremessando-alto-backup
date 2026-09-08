@@ -8,14 +8,15 @@ import StatusModal from '../../components/StatusModal';
 import LightControl from '../../components/LightControl';
 import Gauges from '../../components/Gauges';
 import api from '../../config/api';
+import CORES from '../../styles/cores';
 
 const mqtt = new MQTTService();
 
 const { mqttHost, mqttPort, mqttPath, mqttUser, mqttPass } =
   Constants.expoConfig.extra;
 
-export default function TelaConectar({ navigation, route }) {
-  const { totalArremessos, totalTempo } = route.params;
+export default function TelaTreinoAtivo({ navigation, route }) {
+  const { titulo, totalArremessos, totalTempo } = route.params;
 
   const [isConnected, setIsConnected] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -76,7 +77,6 @@ export default function TelaConectar({ navigation, route }) {
 
   useEffect(() => {
     if (!treinoAtivo) return;
-
     const interval = setInterval(() => {
       setTempoRestante(prev => {
         if (prev <= 1) {
@@ -88,7 +88,6 @@ export default function TelaConectar({ navigation, route }) {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, [treinoAtivo]);
 
@@ -106,7 +105,6 @@ export default function TelaConectar({ navigation, route }) {
   };
 
   const salvarSessao = async (totalFinal) => {
-    const aproveitamento = Math.round((acertosRef.current / totalFinal) * 100);
     const segundosUsados = totalTempo * 60 - tempoRestante;
     const minutos = Math.floor(segundosUsados / 60);
     const segundos = segundosUsados % 60;
@@ -117,13 +115,14 @@ export default function TelaConectar({ navigation, route }) {
         tentativas: totalFinal,
         acertos: acertosRef.current,
         tempo,
+        titulo,
       });
     } catch (erro) {
-      console.error('Erro ao salvar sessão:', erro);
+      // Silencia o erro mas continua a navegação
     }
 
     setShowEndModal(false);
-    navigation.navigate('TelaPrincipalRelatorio');
+    navigation.navigate('TelaHistoricoTreinos');
   };
 
   const porcentagemAcertos = totalArremessos > 0
@@ -142,10 +141,18 @@ export default function TelaConectar({ navigation, route }) {
     <GradientWrapper style={estilos.tela}>
       <ScrollView contentContainerStyle={estilos.scroll}>
 
-        <Text style={estilos.titulo}>Treino em Andamento</Text>
+        <Text style={estilos.titulo}>{titulo}</Text>
         <Text style={estilos.subtitulo}>
           {acertos} / {totalArremessos} acertos
         </Text>
+
+        {/* Indicador de conexão com o sensor */}
+        <View style={estilos.statusConexao}>
+          <View style={[estilos.bolinha, { backgroundColor: isConnected ? CORES.sucesso : CORES.aviso }]} />
+          <Text style={estilos.textoConexao}>
+            {isConnected ? 'Sensor conectado' : 'Conectando ao sensor...'}
+          </Text>
+        </View>
 
         <LightControl isLightOn={isSensorOn} />
 
@@ -157,17 +164,13 @@ export default function TelaConectar({ navigation, route }) {
 
         <TouchableOpacity
           style={estilos.btnEncerrar}
-          onPress={() => {
-            setMotivoFim('manual');
-            encerrarTreino();
-          }}
+          onPress={() => { setMotivoFim('manual'); encerrarTreino(); }}
         >
           <Text style={estilos.textoBotao}>Encerrar Treino</Text>
         </TouchableOpacity>
 
       </ScrollView>
 
-      {/* Modal de fim de treino */}
       <Modal visible={showEndModal} transparent animationType="fade">
         <View style={estilos.modalContainer}>
           <View style={estilos.modalContent}>
@@ -178,10 +181,7 @@ export default function TelaConectar({ navigation, route }) {
                 <Text style={estilos.modalTexto}>
                   Parabéns! Você completou todos os {totalArremessos} arremessos com {acertos} acertos.
                 </Text>
-                <TouchableOpacity
-                  style={estilos.btnConfirmar}
-                  onPress={() => salvarSessao(totalArremessos)}
-                >
+                <TouchableOpacity style={estilos.btnConfirmar} onPress={() => salvarSessao(totalArremessos)}>
                   <Text style={estilos.textoBotao}>Salvar e ver histórico</Text>
                 </TouchableOpacity>
               </>
@@ -190,19 +190,11 @@ export default function TelaConectar({ navigation, route }) {
                 <Text style={estilos.modalTexto}>
                   Você realizou todos os {totalArremessos} arremessos planejados?
                 </Text>
-                <TouchableOpacity
-                  style={estilos.btnConfirmar}
-                  onPress={() => salvarSessao(totalArremessos)}
-                >
+                <TouchableOpacity style={estilos.btnConfirmar} onPress={() => salvarSessao(totalArremessos)}>
                   <Text style={estilos.textoBotao}>Sim, salvar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={estilos.btnAjustar}
-                  onPress={() => salvarSessao(acertosRef.current)}
-                >
-                  <Text style={estilos.textoBotao}>
-                    Não, arremessei apenas {acertos}
-                  </Text>
+                <TouchableOpacity style={estilos.btnAjustar} onPress={() => salvarSessao(acertosRef.current)}>
+                  <Text style={estilos.textoBotao}>Não, arremessei apenas {acertos}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -210,12 +202,7 @@ export default function TelaConectar({ navigation, route }) {
         </View>
       </Modal>
 
-      <StatusModal
-        visible={showError}
-        onRetry={startConnection}
-        onLater={() => setShowError(false)}
-      />
-
+      <StatusModal visible={showError} onRetry={startConnection} onLater={() => setShowError(false)} />
       <NavegacaoInferior />
     </GradientWrapper>
   );
@@ -224,31 +211,17 @@ export default function TelaConectar({ navigation, route }) {
 const estilos = StyleSheet.create({
   tela: { flex: 1 },
   scroll: { padding: 24, alignItems: 'center', paddingBottom: 100 },
-  titulo: { color: '#FFF', fontSize: 24, fontWeight: 'bold', marginTop: 50, marginBottom: 4 },
-  subtitulo: { color: '#FFF', fontSize: 18, marginBottom: 30, opacity: 0.8 },
-  btnEncerrar: {
-    backgroundColor: '#700000', padding: 16,
-    borderRadius: 12, width: '100%',
-    alignItems: 'center', marginTop: 20,
-  },
-  textoBotao: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-  modalContainer: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#3a0000', padding: 30,
-    borderRadius: 20, width: '85%', alignItems: 'center',
-    borderWidth: 1, borderColor: '#700000',
-  },
-  modalTitulo: { color: '#FFF', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  titulo: { color: CORES.branco, fontSize: 24, fontWeight: 'bold', marginTop: 50, marginBottom: 4 },
+  subtitulo: { color: CORES.branco, fontSize: 18, marginBottom: 12, opacity: 0.8 },
+  statusConexao: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  bolinha: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
+  textoConexao: { color: CORES.branco, fontSize: 13, opacity: 0.9 },
+  btnEncerrar: { backgroundColor: CORES.primaria, padding: 16, borderRadius: 12, width: '100%', alignItems: 'center', marginTop: 20 },
+  textoBotao: { color: CORES.branco, fontWeight: 'bold', fontSize: 16 },
+  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { backgroundColor: CORES.primariaEscura, padding: 30, borderRadius: 20, width: '85%', alignItems: 'center', borderWidth: 1, borderColor: CORES.primaria },
+  modalTitulo: { color: CORES.branco, fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
   modalTexto: { color: '#FFB3B3', textAlign: 'center', marginBottom: 24, fontSize: 15 },
-  btnConfirmar: {
-    backgroundColor: '#700000', padding: 14,
-    borderRadius: 12, width: '100%', marginBottom: 12, alignItems: 'center',
-  },
-  btnAjustar: {
-    backgroundColor: 'rgba(255,255,255,0.1)', padding: 14,
-    borderRadius: 12, width: '100%', alignItems: 'center',
-  },
+  btnConfirmar: { backgroundColor: CORES.primaria, padding: 14, borderRadius: 12, width: '100%', marginBottom: 12, alignItems: 'center' },
+  btnAjustar: { backgroundColor: 'rgba(255,255,255,0.1)', padding: 14, borderRadius: 12, width: '100%', alignItems: 'center' },
 });

@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
 import MaskInput from 'react-native-mask-input';
 import GradientWrapper from '../../components/GradientWrapper';
 import estilosGlobais from '../../styles/styles';
 import NavegacaoInferior from '../../components/NavegacaoInferior';
+import CORES from '../../styles/cores';
 
-export default function TelaFormularioRelatorio({ navigation }) {
+export default function TelaConfigurarTreino({ navigation }) {
+  const [titulo, setTitulo] = useState('');
   const [arremessos, setArremessos] = useState('');
   const [tempo, setTempo] = useState('');
 
-  const podeIniciar = arremessos !== '' && tempo !== '';
+  const podeIniciar = titulo !== '' && arremessos !== '' && tempo !== '';
 
   const iniciar = () => {
-    navigation.navigate('TelaConectar', {
+    navigation.navigate('TelaTreinoAtivo', {
+      titulo,
       totalArremessos: parseInt(arremessos),
       totalTempo: parseInt(tempo),
     });
@@ -29,11 +32,20 @@ export default function TelaFormularioRelatorio({ navigation }) {
       <View style={estilos.conteudo}>
         <View style={estilos.card}>
 
+          <Text style={estilos.label}>Título do treino</Text>
+          <TextInput
+            style={estilos.input}
+            placeholder="Ex: Treino de lance livre"
+            placeholderTextColor={CORES.textoDesabilitado}
+            value={titulo}
+            onChangeText={setTitulo}
+          />
+
           <Text style={estilos.label}>Quantidade de arremessos</Text>
           <MaskInput
             style={estilos.input}
             placeholder="Ex: 30"
-            placeholderTextColor="#999"
+            placeholderTextColor={CORES.textoDesabilitado}
             value={arremessos}
             onChangeText={(masked) => setArremessos(masked)}
             mask={[/\d/, /\d/, /\d/]}
@@ -44,7 +56,7 @@ export default function TelaFormularioRelatorio({ navigation }) {
           <MaskInput
             style={estilos.input}
             placeholder="Ex: 5"
-            placeholderTextColor="#999"
+            placeholderTextColor={CORES.textoDesabilitado}
             value={tempo}
             onChangeText={(masked) => setTempo(masked)}
             mask={[/\d/, /\d/]}
@@ -70,16 +82,10 @@ export default function TelaFormularioRelatorio({ navigation }) {
 const estilos = StyleSheet.create({
   tela: { flex: 1, paddingTop: 50 },
   conteudo: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  card: { backgroundColor: '#FFF', width: '100%', borderRadius: 20, padding: 24, elevation: 5 },
-  label: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 8, marginTop: 16 },
-  input: {
-    backgroundColor: '#D9D9D9', borderRadius: 10,
-    padding: 14, fontSize: 16, color: '#000',
-  },
-  botao: {
-    backgroundColor: '#700000', borderRadius: 12,
-    padding: 16, alignItems: 'center', marginTop: 30,
-  },
-  botaoDesabilitado: { backgroundColor: '#C0A0A0' },
-  textoBotao: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+  card: { backgroundColor: CORES.branco, width: '100%', borderRadius: 20, padding: 24, elevation: 5 },
+  label: { fontSize: 16, fontWeight: 'bold', color: CORES.textoMedio, marginBottom: 8, marginTop: 16 },
+  input: { backgroundColor: CORES.cinzaClaro, borderRadius: 10, padding: 14, fontSize: 16, color: CORES.textoEscuro },
+  botao: { backgroundColor: CORES.primaria, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 30 },
+  botaoDesabilitado: { backgroundColor: CORES.cinzaMedio },
+  textoBotao: { color: CORES.branco, fontWeight: 'bold', fontSize: 16 },
 });

@@ -112,7 +112,7 @@ BEGIN
     WHERE id_jogador = p_id_jogador;
 END$$
 
--- Busca o progresso do jogador nas aulas (usada na TelaHome e TelaTreino)
+-- Busca o progresso do jogador nas aulas (usada na TelaSemanas e TelaTreino)
 CREATE PROCEDURE BuscarProgressoJogador(IN p_id_jogador INT)
 BEGIN
     SELECT

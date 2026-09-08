@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import CORES from '../styles/cores';
 
 export default function LightControl({ isLightOn }) {
   return (
     <View style={estilos.card}>
-      <View style={[estilos.circulo, { backgroundColor: isLightOn ? '#2ECC71' : '#3a0000' }]} />
+      <View style={[estilos.circulo, { backgroundColor: isLightOn ? CORES.sucesso : CORES.primariaEscura }]} />
       <Text style={estilos.label}>
         {isLightOn ? 'Acerto! 🏀' : 'Aguardando arremesso...'}
       </Text>
@@ -27,7 +28,7 @@ const estilos = StyleSheet.create({
     borderRadius: 60,
   },
   label: {
-    color: '#FFF',
+    color: CORES.branco,
     marginTop: 16,
     fontSize: 16,
     fontWeight: 'bold',
