@@ -24,7 +24,18 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoutes);              
 app.use("/jogador", jogadorRoutes);        
 app.use("/aulas", aulasRoutes);            
-app.use("/aproveitamento", aproveitamentoRoutes);   
+app.use("/aproveitamento", aproveitamentoRoutes);
+
+app.use((error, req, res, next) => {
+  if (error?.message === "Apenas arquivos de imagem são permitidos.") {
+    return res.status(400).json({ mensagem: error.message });
+  }
+  if (error?.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ mensagem: "A foto deve ter no máximo 10 MB." });
+  }
+  console.error(error);
+  return res.status(500).json({ mensagem: "Erro interno no servidor." });
+});
  
 const PORT = process.env.PORT || 3000;
  

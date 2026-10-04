@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, Image,
   FlatList, ActivityIndicator, Alert, ScrollView
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
@@ -9,7 +9,7 @@ import NavegacaoInferior from '../../components/NavegacaoInferior';
 import api from '../../config/api';
 import CORES from '../../styles/cores';
 
-export default function TelaTreino({ route }) {
+export default function TelaTreino({ route, navigation }) {
   const { semana } = route.params;
 
   const [aulas, setAulas] = useState([]);
@@ -116,15 +116,24 @@ export default function TelaTreino({ route }) {
             </View>
           )}
 
+          {aulaSelecionada.gif_url ? (
+            <View style={estilos.gifContainer}>
+              <Image
+                source={{ uri: aulaSelecionada.gif_url }}
+                style={estilos.gif}
+                resizeMode="contain"
+              />
+            </View>
+          ) : null}
+
           {aulaSelecionada.youtube_id ? (
             <View style={estilos.playerContainer}>
-              <YoutubePlayer height={220} videoId={aulaSelecionada.youtube_id} play={false} />
             </View>
-          ) : (
+          ) : !aulaSelecionada.gif_url ? (
             <View style={estilos.semVideo}>
-              <Text style={estilos.textoSemVideo}>📹 Vídeo em breve</Text>
+              <Text style={estilos.textoSemVideo}>Vídeo/GIF em breve</Text>
             </View>
-          )}
+          ) : null}
 
           <View style={estilos.descricaoContainer}>
             <Text style={estilos.labelDescricao}>Sobre esta aula</Text>
@@ -156,6 +165,13 @@ export default function TelaTreino({ route }) {
   return (
     <GradientWrapper style={estilos.tela}>
       <View style={estilos.conteudo}>
+        <TouchableOpacity
+          style={estilos.btnVoltarSemana}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={estilos.txtVoltarSemana}>← Voltar</Text>
+        </TouchableOpacity>
+
         <Text style={estilos.titulo}>Semana {semana}</Text>
         {carregando ? (
           <ActivityIndicator size="large" color={CORES.branco} style={estilos.loading} />
@@ -180,6 +196,8 @@ const estilos = StyleSheet.create({
   tela: { flex: 1 },
   conteudo: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
   loading: { marginTop: 40 },
+  btnVoltarSemana: { marginBottom: 10 },
+  txtVoltarSemana: { color: CORES.branco, fontSize: 15, fontWeight: 'bold' },
   titulo: { fontSize: 24, color: CORES.branco, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   listaConteudo: { paddingBottom: 20 },
   caixaDia: { backgroundColor: CORES.branco, padding: 20, borderRadius: 10, marginBottom: 10 },
@@ -199,6 +217,8 @@ const estilos = StyleSheet.create({
   detalheTitulo: { fontSize: 22, color: CORES.branco, fontWeight: 'bold', marginBottom: 12 },
   badgePratica: { backgroundColor: '#FFF3E0', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', marginBottom: 14 },
   textoBadge: { fontSize: 12, color: '#E65100', fontWeight: 'bold' },
+  gifContainer: { backgroundColor: CORES.branco, borderRadius: 12, overflow: 'hidden', marginBottom: 20, alignItems: 'center', justifyContent: 'center', padding: 10 },
+  gif: { width: '100%', height: 220 },
   playerContainer: { borderRadius: 12, overflow: 'hidden', marginBottom: 20 },
   semVideo: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, height: 120, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   textoSemVideo: { color: CORES.branco, fontSize: 15 },

@@ -18,6 +18,7 @@ CREATE TABLE ProgressoAula (
 -- Dados do jogador
 CREATE TABLE Jogador (
     id_jogador INT PRIMARY KEY AUTO_INCREMENT,
+    foto_url VARCHAR(500) NULL;
     email VARCHAR(50) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(100) NOT NULL,
@@ -33,18 +34,19 @@ CREATE TABLE Jogador (
 -- Aulas do curso com suporte a vídeo do YouTube
 CREATE TABLE Aulas (
     id_aula INT PRIMARY KEY AUTO_INCREMENT,
+    gif_url VARCHAR(500) NULL;
     semana INT NOT NULL,
     dia INT NOT NULL,
     numero_aula INT NOT NULL,
     titulo VARCHAR(100),
     explicacao VARCHAR(1000),
     pratica BOOLEAN DEFAULT FALSE,
-    youtube_id VARCHAR(20) DEFAULT NULL
 );
 
 -- Registros de aproveitamento dos treinos
 CREATE TABLE RegistroAproveitamento (
     id_reg_aprov INT PRIMARY KEY AUTO_INCREMENT,
+    titulo VARCHAR(150) DEFAULT 'Treino Livre',
     tentativas INT DEFAULT 0,
     acertos INT DEFAULT 0,
     aproveitamento DECIMAL(5,2) DEFAULT 0,

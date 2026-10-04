@@ -13,6 +13,7 @@ init({
 export default class MQTTService {
   constructor() {
     this.client = null;
+    this.topics = [];
   }
 
   connect(config, onMessage, onConnect, onFailure) {
@@ -24,11 +25,30 @@ export default class MQTTService {
       onMessage(message.destinationName, message.payloadString);
     };
 
+    // Sem isso, uma queda de conexão passa despercebida: o cliente não
+    // reconecta e não reassina os tópicos sozinho.
+    this.client.onConnectionLost = (responseObject) => {
+      if (responseObject.errorCode !== 0) {
+        console.log('Conexão MQTT perdida:', responseObject.errorMessage);
+      }
+      onFailure(responseObject);
+
+      // Tenta reconectar depois de um tempo
+      setTimeout(() => {
+        this.connect(config, onMessage, onConnect, onFailure);
+      }, 3000);
+    };
+
     const options = {
       userName: user,
       password: pass,
       useSSL: true,
-      onSuccess: onConnect,
+      onSuccess: () => {
+        // Reassina automaticamente tudo que já foi inscrito antes,
+        // incluindo depois de uma reconexão.
+        this.topics.forEach((topic) => this.client.subscribe(topic));
+        onConnect();
+      },
       onFailure: onFailure,
       timeout: 3,
       keepAliveInterval: 60,
@@ -38,7 +58,12 @@ export default class MQTTService {
   }
 
   subscribe(topic) {
-    this.client.subscribe(topic);
+    if (!this.topics.includes(topic)) {
+      this.topics.push(topic);
+    }
+    if (this.client?.isConnected()) {
+      this.client.subscribe(topic);
+    }
   }
 
   publish(topic, message) {

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIn
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import GradientWrapper from '../../components/GradientWrapper';
 import NavegacaoInferior from '../../components/NavegacaoInferior';
 import estilosGlobais from '../../styles/styles';
@@ -13,13 +12,11 @@ import { limparSessao } from '../../config/storage';
 export default function TelaPerfil({ navigation }) {
   const [jogador, setJogador] = useState(null);
   const [carregando, setCarregando] = useState(true);
-  const [fotoUri, setFotoUri] = useState(null);
   const [modalFoto, setModalFoto] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       carregarPerfil();
-      carregarFoto();
     }, [])
   );
 
@@ -35,9 +32,29 @@ export default function TelaPerfil({ navigation }) {
     }
   }
 
-  async function carregarFoto() {
-    const uri = await AsyncStorage.getItem('fotoPerfil');
-    if (uri) setFotoUri(uri);
+  async function enviarFoto(uri, mimeType, fileName) {
+    try {
+      const formData = new FormData();
+
+      formData.append('foto', {
+        uri,
+        type: mimeType || 'image/jpeg',
+        name: fileName || 'foto-perfil.jpg',
+      });
+
+      const resposta = await api.post('/jogador/foto', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setJogador((atual) => ({
+        ...atual,
+        foto_url: resposta.data.foto_url,
+      }));
+
+      Alert.alert('Sucesso', 'Foto de perfil atualizada!');
+    } catch (erro) {
+      Alert.alert('Erro', erro.response?.data?.mensagem || 'Não foi possível enviar a foto.');
+    }
   }
 
   async function tirarFoto() {
@@ -48,12 +65,15 @@ export default function TelaPerfil({ navigation }) {
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
     if (result.canceled) return;
 
-    const uri = result.assets[0].uri;
-    await AsyncStorage.setItem('fotoPerfil', uri);
-    setFotoUri(uri);
+    const asset = result.assets[0];
+    await enviarFoto(asset.uri, asset.mimeType, asset.fileName);
   }
 
   async function escolherDaGaleria() {
@@ -67,13 +87,13 @@ export default function TelaPerfil({ navigation }) {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      quality: 1,
+      quality: 0.8,
     });
+
     if (result.canceled) return;
 
-    const uri = result.assets[0].uri;
-    await AsyncStorage.setItem('fotoPerfil', uri);
-    setFotoUri(uri);
+    const asset = result.assets[0];
+    await enviarFoto(asset.uri, asset.mimeType, asset.fileName);
   }
 
   async function sair() {
@@ -99,7 +119,6 @@ export default function TelaPerfil({ navigation }) {
 
   return (
     <GradientWrapper style={estilos.tela}>
-
       <View style={estilosGlobais.cabecalho}>
         <Text style={estilosGlobais.titulo}>Perfil</Text>
         <Image source={require('../../assets/basquete.png')} style={estilosGlobais.icone} />
@@ -107,14 +126,13 @@ export default function TelaPerfil({ navigation }) {
 
       <ScrollView contentContainerStyle={estilos.scrollContent}>
         <View style={estilos.card}>
-
           <TouchableOpacity style={estilos.configBtn} onPress={sair}>
             <Ionicons name="log-out-outline" size={24} color="#A9A9A9" />
           </TouchableOpacity>
 
           <View style={estilos.avatarContainer}>
-            {fotoUri ? (
-              <Image source={{ uri: fotoUri }} style={estilos.avatarImagem} />
+            {jogador?.foto_url ? (
+              <Image source={{ uri: jogador.foto_url }} style={estilos.avatarImagem} />
             ) : (
               <View style={estilos.avatarPlaceholder}>
                 <Ionicons name="person" size={80} color="#fff" />
@@ -130,24 +148,16 @@ export default function TelaPerfil({ navigation }) {
           ) : (
             <View style={estilos.infoSection}>
               <Text style={estilos.label}>Nome</Text>
-              <View style={estilos.campoDado}>
-                <Text style={estilos.textoDado}>{jogador?.nome || '—'}</Text>
-              </View>
+              <View style={estilos.campoDado}><Text style={estilos.textoDado}>{jogador?.nome || '—'}</Text></View>
 
               <Text style={estilos.label}>Data de nascimento</Text>
-              <View style={estilos.campoDado}>
-                <Text style={estilos.textoDado}>{formatarData(jogador?.data_nascimento)}</Text>
-              </View>
+              <View style={estilos.campoDado}><Text style={estilos.textoDado}>{formatarData(jogador?.data_nascimento)}</Text></View>
 
               <Text style={estilos.label}>Experiência</Text>
-              <View style={estilos.campoDado}>
-                <Text style={estilos.textoDado}>{formatarExperiencia(jogador?.exp_basq)}</Text>
-              </View>
+              <View style={estilos.campoDado}><Text style={estilos.textoDado}>{formatarExperiencia(jogador?.exp_basq)}</Text></View>
 
               <Text style={estilos.label}>Email</Text>
-              <View style={estilos.campoDado}>
-                <Text style={estilos.textoDado}>{jogador?.email || '—'}</Text>
-              </View>
+              <View style={estilos.campoDado}><Text style={estilos.textoDado}>{jogador?.email || '—'}</Text></View>
             </View>
           )}
 
@@ -164,21 +174,14 @@ export default function TelaPerfil({ navigation }) {
         <TouchableOpacity style={estilos.modalOverlay} activeOpacity={1} onPress={() => setModalFoto(false)}>
           <View style={estilos.modalSheet}>
             <Text style={estilos.modalTitulo}>Foto de perfil</Text>
-
             <TouchableOpacity style={estilos.modalOpcao} onPress={tirarFoto}>
-              <View style={estilos.modalIconCircle}>
-                <FontAwesome name="camera" size={16} color="#700000" />
-              </View>
+              <View style={estilos.modalIconCircle}><FontAwesome name="camera" size={16} color="#700000" /></View>
               <Text style={estilos.modalOpcaoTexto}>Tirar Foto</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={estilos.modalOpcao} onPress={escolherDaGaleria}>
-              <View style={estilos.modalIconCircle}>
-                <FontAwesome name="picture-o" size={16} color="#700000" />
-              </View>
+              <View style={estilos.modalIconCircle}><FontAwesome name="picture-o" size={16} color="#700000" /></View>
               <Text style={estilos.modalOpcaoTexto}>Escolher da Galeria</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={estilos.modalCancelar} onPress={() => setModalFoto(false)}>
               <Text style={estilos.modalCancelarTexto}>Cancelar</Text>
             </TouchableOpacity>

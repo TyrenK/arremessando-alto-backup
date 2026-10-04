@@ -11,7 +11,7 @@ export default function TelaConfigurarTreino({ navigation }) {
   const [arremessos, setArremessos] = useState('');
   const [tempo, setTempo] = useState('');
 
-  const podeIniciar = titulo !== '' && arremessos !== '' && tempo !== '';
+  const podeIniciar = titulo.trim() !== '' && arremessos !== '' && tempo !== '';
 
   const iniciar = () => {
     navigation.navigate('TelaTreinoAtivo', {

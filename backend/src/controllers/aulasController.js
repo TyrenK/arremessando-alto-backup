@@ -9,14 +9,24 @@ async function listarAulasPorSemana(req, res) {
 
   try {
     const [rows] = await db.query(
-      `SELECT id_aula, semana, dia, numero_aula, titulo, explicacao, pratica, youtube_id
+      `SELECT
+        id_aula,
+        semana,
+        dia,
+        numero_aula,
+        titulo,
+        explicacao,
+        pratica,
+        gif_url
        FROM Aulas
        WHERE semana = ?
        ORDER BY dia, numero_aula`,
       [semana]
     );
+
     return res.status(200).json(rows);
   } catch (error) {
+    console.error("Erro ao listar aulas:", error);
     return res.status(500).json({ mensagem: "Erro interno no servidor." });
   }
 }
@@ -28,6 +38,7 @@ async function buscarProgresso(req, res) {
     const [rows] = await db.query("CALL BuscarProgressoJogador(?)", [id_jogador]);
     return res.status(200).json(rows[0][0] || {});
   } catch (error) {
+    console.error("Erro ao buscar progresso:", error);
     return res.status(500).json({ mensagem: "Erro interno no servidor." });
   }
 }
@@ -55,6 +66,7 @@ async function atualizarProgresso(req, res) {
 
     return res.status(200).json({ mensagem: "Progresso atualizado com sucesso!" });
   } catch (error) {
+    console.error("Erro ao atualizar progresso:", error);
     return res.status(500).json({ mensagem: "Erro interno no servidor." });
   }
 }

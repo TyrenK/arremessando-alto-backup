@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import GradientWrapper from '../../components/GradientWrapper';
 import estilosGlobais from '../../styles/styles';
 import api from '../../config/api';
@@ -20,8 +19,9 @@ export default function TelaPerfilEdicao({ navigation, route }) {
   const [nome, setNome] = useState(jogadorAtual.nome || '');
   const [email, setEmail] = useState(jogadorAtual.email || '');
   const [dataNascimento, setDataNascimento] = useState(dataParaInput(jogadorAtual.data_nascimento));
-  const [fotoUri, setFotoUri] = useState(null);
+  const [fotoUrl, setFotoUrl] = useState(jogadorAtual.foto_url || null);
   const [carregando, setCarregando] = useState(false);
+  const [enviandoFoto, setEnviandoFoto] = useState(false);
 
   function formatarData(data) {
     const partes = data.split('/');
@@ -48,13 +48,33 @@ export default function TelaPerfilEdicao({ navigation, route }) {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      quality: 1,
+      quality: 0.8,
     });
 
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      await AsyncStorage.setItem('fotoPerfil', uri);
-      setFotoUri(uri);
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+
+    try {
+      setEnviandoFoto(true);
+
+      const formData = new FormData();
+      formData.append('foto', {
+        uri: asset.uri,
+        type: asset.mimeType || 'image/jpeg',
+        name: asset.fileName || 'foto-perfil.jpg',
+      });
+
+      const resposta = await api.post('/jogador/foto', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setFotoUrl(resposta.data.foto_url);
+      Alert.alert('Sucesso', 'Foto atualizada!');
+    } catch (erro) {
+      Alert.alert('Erro', erro.response?.data?.mensagem || 'Não foi possível enviar a foto.');
+    } finally {
+      setEnviandoFoto(false);
     }
   }
 
@@ -75,7 +95,6 @@ export default function TelaPerfilEdicao({ navigation, route }) {
       Alert.alert('Sucesso!', 'Perfil atualizado!', [
         { text: 'OK', onPress: () => navigation.navigate('TelaPerfil') }
       ]);
-
     } catch (erro) {
       const msg = erro.response?.data?.mensagem || 'Erro ao salvar alterações.';
       Alert.alert('Erro', msg);
@@ -86,7 +105,6 @@ export default function TelaPerfilEdicao({ navigation, route }) {
 
   return (
     <GradientWrapper style={estilos.tela}>
-
       <View style={estilosGlobais.cabecalho}>
         <Text style={estilosGlobais.titulo}>Editar Perfil</Text>
         <Image source={require('../../assets/basquete.png')} style={estilosGlobais.icone} />
@@ -94,13 +112,24 @@ export default function TelaPerfilEdicao({ navigation, route }) {
 
       <ScrollView contentContainerStyle={estilos.scrollContent}>
         <View style={estilos.card}>
-
           <View style={estilos.avatarContainer}>
-            <View style={estilos.avatarPlaceholder}>
-              <Ionicons name="person" size={80} color={CORES.branco} />
-            </View>
-            <TouchableOpacity style={estilos.editIconBtn} onPress={escolherFoto}>
-              <MaterialIcons name="camera-alt" size={20} color={CORES.branco} />
+            {fotoUrl ? (
+              <Image source={{ uri: fotoUrl }} style={estilos.avatarImagem} />
+            ) : (
+              <View style={estilos.avatarPlaceholder}>
+                <Ionicons name="person" size={80} color={CORES.branco} />
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={estilos.editIconBtn}
+              onPress={escolherFoto}
+              disabled={enviandoFoto}
+            >
+              {enviandoFoto
+                ? <ActivityIndicator color={CORES.branco} />
+                : <MaterialIcons name="camera-alt" size={20} color={CORES.branco} />
+              }
             </TouchableOpacity>
           </View>
 
@@ -146,7 +175,6 @@ export default function TelaPerfilEdicao({ navigation, route }) {
               }
             </TouchableOpacity>
           </View>
-
         </View>
       </ScrollView>
     </GradientWrapper>
@@ -159,7 +187,8 @@ const estilos = StyleSheet.create({
   card: { backgroundColor: CORES.branco, width: '90%', borderRadius: 20, padding: 15, alignItems: 'center', elevation: 5 },
   avatarContainer: { position: 'relative', marginBottom: 10 },
   avatarPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#E0E0E0', justifyContent: 'center', alignItems: 'center' },
-  editIconBtn: { backgroundColor: CORES.primaria, width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: 5, right: 5, borderWidth: 3, borderColor: CORES.branco },
+  avatarImagem: { width: 120, height: 120, borderRadius: 60 },
+  editIconBtn: { backgroundColor: CORES.primaria, width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: 5, right: 5, borderWidth: 3, borderColor: CORES.branco, justifyContent: 'center', alignItems: 'center' },
   infoSection: { width: '100%', paddingHorizontal: 10 },
   label: { fontWeight: 'bold', fontSize: 16, color: CORES.textoMedio, marginTop: 10 },
   input: { backgroundColor: CORES.cinzaClaro, borderRadius: 8, padding: 12, marginTop: 3, color: CORES.textoEscuro, fontSize: 15 },
