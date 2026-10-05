@@ -1,71 +1,63 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { Formik } from 'formik';
+import * as yup from 'yup';
 import GradientWrapper from '../../components/GradientWrapper';
 import api from '../../config/api';
 import { pegarJogador } from '../../config/storage';
 import CORES from '../../styles/cores';
 
+const schema = yup.object({
+  nome: yup
+    .string()
+    .min(2, 'Nome muito curto.')
+    .required('Nome obrigatório.'),
+  dataNascimento: yup
+    .string()
+    .matches(/^\d{2}\/\d{2}\/\d{4}$/, 'Use o formato DD/MM/AAAA.')
+    .nullable(),
+  experiencia: yup
+    .string()
+    .oneOf(['iniciante', 'intermediario', 'experiente', 'profissional'])
+    .required('Selecione uma experiência.'),
+});
+
+const opcoes = [
+  { label: 'Iniciante',     valor: 'iniciante' },
+  { label: 'Intermediário', valor: 'intermediario' },
+  { label: 'Experiente',    valor: 'experiente' },
+  { label: 'Profissional',  valor: 'profissional' },
+];
+
+function mascaraData(texto) {
+  const n = texto.replace(/\D/g, '');
+  if (n.length <= 2) return n;
+  if (n.length <= 4) return `${n.slice(0,2)}/${n.slice(2)}`;
+  return `${n.slice(0,2)}/${n.slice(2,4)}/${n.slice(4,8)}`;
+}
+
 export default function TelaFormulario({ navigation }) {
-  const [nome, setNome] = useState('');
-  const [dataNascimento, setDataNascimento] = useState('');
-  const [experiencia, setExperiencia] = useState('iniciante');
   const [aberto, setAberto] = useState(false);
-  const [carregando, setCarregando] = useState(false);
 
-  const opcoes = [
-    { label: 'Iniciante',     valor: 'iniciante' },
-    { label: 'Intermediário', valor: 'intermediario' },
-    { label: 'Experiente',    valor: 'experiente' },
-    { label: 'Profissional',  valor: 'profissional' },
-  ];
+  async function enviarFormulario(valores) {
+    const jogadorSalvo = await pegarJogador();
 
-  const selecionarOpcao = (opcao) => {
-    setExperiencia(opcao.valor);
-    setAberto(false);
-  };
-
-  function mascaraData(texto) {
-    const numeros = texto.replace(/\D/g, '');
-    if (numeros.length <= 2) return numeros;
-    if (numeros.length <= 4) return `${numeros.slice(0,2)}/${numeros.slice(2)}`;
-    return `${numeros.slice(0,2)}/${numeros.slice(2,4)}/${numeros.slice(4,8)}`;
-  }
-
-  async function enviarFormulario() {
-    if (!nome) {
-      Alert.alert('Atenção', 'Por favor, informe seu nome.');
-      return;
+    let dataFormatada = null;
+    if (valores.dataNascimento && valores.dataNascimento.length === 10) {
+      const partes = valores.dataNascimento.split('/');
+      dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
     }
 
-    setCarregando(true);
-    try {
-      const jogadorSalvo = await pegarJogador();
+    await api.put('/jogador/perfil', {
+      nome: valores.nome,
+      email: jogadorSalvo?.email || '',
+      data_nascimento: dataFormatada,
+    });
 
-      let dataFormatada = null;
-      if (dataNascimento && dataNascimento.length === 10) {
-        const partes = dataNascimento.split('/');
-        dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
-      }
+    await api.put('/jogador/experiencia', { exp_basq: valores.experiencia });
 
-      await api.put('/jogador/perfil', {
-        nome,
-        email: jogadorSalvo?.email || '',
-        data_nascimento: dataFormatada,
-      });
-
-      await api.put('/jogador/experiencia', { exp_basq: experiencia });
-
-      navigation.navigate('TelaSemanas');
-
-    } catch (erro) {
-      const msg = erro.response?.data?.mensagem || 'Erro ao salvar seus dados.';
-      Alert.alert('Erro', msg);
-    } finally {
-      setCarregando(false);
-    }
+    navigation.navigate('TelaSemanas');
   }
-
-  const labelSelecionado = opcoes.find(o => o.valor === experiencia)?.label || 'Iniciante';
 
   return (
     <GradientWrapper style={estilos.container}>
@@ -80,58 +72,81 @@ export default function TelaFormulario({ navigation }) {
             Responda esse formulário para preencher seus dados pessoais e para reconhecermos seu nível de experiência no esporte
           </Text>
 
-          <Text style={estilos.label}>Nome</Text>
-          <TextInput
-            style={estilos.input}
-            placeholder="Digite seu nome"
-            value={nome}
-            onChangeText={setNome}
-          />
-
-          <Text style={estilos.label}>Data de nascimento</Text>
-          <TextInput
-            style={estilos.input}
-            placeholder="DD/MM/AAAA"
-            value={dataNascimento}
-            onChangeText={(texto) => setDataNascimento(mascaraData(texto))}
-            keyboardType="numeric"
-            maxLength={10}
-          />
-
-          <Text style={estilos.label}>Experiência</Text>
-          <TouchableOpacity
-            style={estilos.dropdown}
-            onPress={() => setAberto(!aberto)}
-            activeOpacity={0.7}
+          <Formik
+            initialValues={{ nome: '', dataNascimento: '', experiencia: 'iniciante' }}
+            validationSchema={schema}
+            onSubmit={enviarFormulario}
           >
-            <Text style={estilos.textoDropdown}>{labelSelecionado}</Text>
-            <Text style={estilos.setinha}>▼</Text>
-          </TouchableOpacity>
+            {({ handleSubmit, handleBlur, setFieldValue, values, errors, touched, isSubmitting }) => (
+              <View>
+                <Text style={estilos.label}>Nome</Text>
+                <TextInput
+                  style={[estilos.input, touched.nome && errors.nome && estilos.inputErro]}
+                  placeholder="Digite seu nome"
+                  value={values.nome}
+                  onChangeText={(texto) => setFieldValue('nome', texto)}
+                  onBlur={handleBlur('nome')}
+                />
+                {touched.nome && errors.nome && (
+                  <Text style={estilos.textoErro}>{errors.nome}</Text>
+                )}
 
-          {aberto && (
-            <View style={estilos.listaOpcoes}>
-              {opcoes.map((item) => (
+                <Text style={estilos.label}>Data de nascimento</Text>
+                <TextInput
+                  style={[estilos.input, touched.dataNascimento && errors.dataNascimento && estilos.inputErro]}
+                  placeholder="DD/MM/AAAA"
+                  value={values.dataNascimento}
+                  onChangeText={(texto) => setFieldValue('dataNascimento', mascaraData(texto))}
+                  onBlur={handleBlur('dataNascimento')}
+                  keyboardType="numeric"
+                  maxLength={10}
+                />
+                {touched.dataNascimento && errors.dataNascimento && (
+                  <Text style={estilos.textoErro}>{errors.dataNascimento}</Text>
+                )}
+
+                <Text style={estilos.label}>Experiência</Text>
                 <TouchableOpacity
-                  key={item.valor}
-                  style={estilos.opcaoItem}
-                  onPress={() => selecionarOpcao(item)}
+                  style={estilos.dropdown}
+                  onPress={() => setAberto(!aberto)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={estilos.textoOpcao}>{item.label}</Text>
+                  <Text style={estilos.textoDropdown}>
+                    {opcoes.find(o => o.valor === values.experiencia)?.label || 'Iniciante'}
+                  </Text>
+                  <Text style={estilos.setinha}>▼</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-          )}
 
-          <TouchableOpacity
-            style={[estilos.botao, carregando && estilos.botaoDesabilitado]}
-            onPress={enviarFormulario}
-            disabled={carregando}
-          >
-            {carregando
-              ? <ActivityIndicator color={CORES.branco} />
-              : <Text style={estilos.textoBotao}>Enviar</Text>
-            }
-          </TouchableOpacity>
+                {aberto && (
+                  <View style={estilos.listaOpcoes}>
+                    {opcoes.map((item) => (
+                      <TouchableOpacity
+                        key={item.valor}
+                        style={estilos.opcaoItem}
+                        onPress={() => {
+                          setFieldValue('experiencia', item.valor);
+                          setAberto(false);
+                        }}
+                      >
+                        <Text style={estilos.textoOpcao}>{item.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[estilos.botao, isSubmitting && estilos.botaoDesabilitado]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? <ActivityIndicator color={CORES.branco} />
+                    : <Text style={estilos.textoBotao}>Enviar</Text>
+                  }
+                </TouchableOpacity>
+              </View>
+            )}
+          </Formik>
         </View>
       </ScrollView>
     </GradientWrapper>
@@ -148,6 +163,8 @@ const estilos = StyleSheet.create({
   subtitulo: { fontSize: 13, marginVertical: 15, textAlign: 'justify' },
   label: { fontWeight: 'bold', marginTop: 15 },
   input: { backgroundColor: CORES.cinzaClaro, borderRadius: 5, padding: 12, marginTop: 5 },
+  inputErro: { borderWidth: 1, borderColor: CORES.erro },
+  textoErro: { color: CORES.erro, fontSize: 12, marginTop: 4 },
   dropdown: { backgroundColor: CORES.cinzaClaro, borderRadius: 5, padding: 12, marginTop: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   textoDropdown: { fontSize: 14, color: CORES.textoEscuro },
   setinha: { fontSize: 12, color: CORES.textoDesabilitado },
