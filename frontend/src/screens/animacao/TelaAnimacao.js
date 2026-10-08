@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Text, Image, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import GradientWrapper from '../../components/GradientWrapper';
+import { pegarToken } from '../../config/storage';
 
 // Tela de animação de entrada do app
 export default function TelaAnimacao({ navigation }) {
@@ -22,9 +23,17 @@ export default function TelaAnimacao({ navigation }) {
       easing: Easing.out(Easing.exp),
     });
 
-    // Navega automaticamente após 2 segundos
-    const temporizador = setTimeout(() => {
-      navigation.navigate('TelaLogin');
+    // Após 2 segundos, se já existir um token salvo, entra direto no app
+    const temporizador = setTimeout(async () => {
+      try {
+        const token = await pegarToken();
+        if (token) {
+          navigation.replace('TelaSemanas');
+          return;
+        }
+      } catch (e) {}
+
+      navigation.replace('TelaLogin');
     }, 2000);
 
     return () => clearTimeout(temporizador);
