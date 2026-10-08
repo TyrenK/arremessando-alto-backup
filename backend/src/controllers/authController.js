@@ -22,23 +22,13 @@ async function cadastrar(req, res) {
 
     const senhaCriptografada = await bcrypt.hash(senha, 10);
 
-    const [progresso] = await db.query(
-      "INSERT INTO ProgressoAula (semana_ult_aula, dia_ult_aula, ult_aula_realizada) VALUES (1, 1, 0)"
-    );
-
-    try {
-      await db.query("CALL AdicionarJogador(?, ?, ?, ?, ?, ?)", [
-        email,
-        senhaCriptografada,
-        "Novo Jogador",
-        null,
-        null,
-        progresso.insertId,
-      ]);
-    } catch (erroCadastro) {
-      await db.query("DELETE FROM ProgressoAula WHERE id_prog_aula = ?", [progresso.insertId]);
-      throw erroCadastro;
-    }
+    await db.query("CALL AdicionarJogador(?, ?, ?, ?, ?)", [
+      email,
+      senhaCriptografada,
+      "Novo Jogador",
+      null,
+      null,
+    ]);
 
     return res.status(201).json({ mensagem: "Jogador cadastrado com sucesso!" });
 

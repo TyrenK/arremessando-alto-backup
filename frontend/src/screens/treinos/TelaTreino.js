@@ -13,7 +13,6 @@ export default function TelaTreino({ route, navigation }) {
   const { semana } = route.params;
 
   const [aulas, setAulas] = useState([]);
-  const [progresso, setProgresso] = useState(null);
   const [aulaSelecionada, setAulaSelecionada] = useState(null);
   const [carregando, setCarregando] = useState(true);
 
@@ -24,12 +23,8 @@ export default function TelaTreino({ route, navigation }) {
   async function carregarAulas() {
     setCarregando(true);
     try {
-      const [resAulas, resProgresso] = await Promise.all([
-        api.get(`/aulas?semana=${semana}`),
-        api.get('/aulas/progresso'),
-      ]);
+      const resAulas = await api.get(`/aulas?semana=${semana}`);
       setAulas(resAulas.data);
-      setProgresso(resProgresso.data);
     } catch (erro) {
       Alert.alert('Erro', 'Não foi possível carregar as aulas.');
     } finally {
@@ -37,39 +32,40 @@ export default function TelaTreino({ route, navigation }) {
     }
   }
 
-  function aulaRealizada(numeroAula) {
-    if (!progresso) return false;
-    if (progresso.semana_ult_aula > semana) return true;
-    if (progresso.semana_ult_aula === semana) {
-      return progresso.ult_aula_realizada === numeroAula;
-    }
-    return false;
+  // A conclusão vem do backend (campo "conclusao", por jogador).
+  // Cada aula é independente: marcar ou desmarcar uma não afeta as outras.
+  function atualizarConclusaoLocal(idAula, concluida) {
+    setAulas((atuais) =>
+      atuais.map((a) => (a.id_aula === idAula ? { ...a, conclusao: concluida } : a))
+    );
   }
 
   async function marcarAulaComoFeita(aula) {
-    if (aulaRealizada(aula.numero_aula)) return;
+    if (aula.conclusao) return;
 
     try {
-      await api.put('/aulas/progresso', {
-        semana_ult_aula: semana,
-        dia_ult_aula: aula.dia,
-        ult_aula_realizada: aula.numero_aula,
-      });
-
-      setProgresso({
-        semana_ult_aula: semana,
-        dia_ult_aula: aula.dia,
-        ult_aula_realizada: aula.numero_aula,
-      });
-
+      await api.post(`/aulas/${aula.id_aula}/concluir`);
+      atualizarConclusaoLocal(aula.id_aula, true);
       Alert.alert('Boa! 🏀', 'Aula marcada como concluída!');
     } catch (erro) {
       Alert.alert('Erro', 'Não foi possível salvar o progresso.');
     }
   }
 
+  async function desmarcarAula(aula) {
+    if (!aula.conclusao) return;
+
+    try {
+      await api.delete(`/aulas/${aula.id_aula}/concluir`);
+      atualizarConclusaoLocal(aula.id_aula, false);
+      Alert.alert('Conclusão desfeita', 'A aula não está mais marcada como concluída.');
+    } catch (erro) {
+      Alert.alert('Erro', 'Não foi possível salvar o progresso.');
+    }
+  }
+
   const renderAula = useCallback(({ item }) => {
-    const feita = aulaRealizada(item.numero_aula);
+    const feita = item.conclusao;
 
     return (
       <TouchableOpacity
@@ -90,11 +86,12 @@ export default function TelaTreino({ route, navigation }) {
         </View>
       </TouchableOpacity>
     );
-  }, [progresso]);
+  }, []);
 
   // ── TELA DE DETALHE DA AULA ──────────────────────────────────────────────────
   if (aulaSelecionada) {
-    const feita = aulaRealizada(aulaSelecionada.numero_aula);
+    const aulaAtual = aulas.find((a) => a.id_aula === aulaSelecionada.id_aula) || aulaSelecionada;
+    const feita = aulaAtual.conclusao;
     const tituloTreino = `Treino Semana ${semana} - Aula ${aulaSelecionada.numero_aula}`;
 
     return (
@@ -138,11 +135,20 @@ export default function TelaTreino({ route, navigation }) {
             <View style={estilos.concluidoContainer}>
               <Text style={estilos.textoConcluido}>✓ Aula concluída</Text>
             </View>
+          ) : null}
+
+          {feita ? (
+            <TouchableOpacity
+              style={estilos.botaoDesmarcar}
+              onPress={() => desmarcarAula(aulaAtual)}
+            >
+              <Text style={estilos.textoBotaoDesmarcar}>Desmarcar conclusão</Text>
+            </TouchableOpacity>
           ) : (
             <View style={estilos.rowBotoes}>
               <TouchableOpacity
                 style={[estilos.botao, estilos.botaoConcluir]}
-                onPress={() => marcarAulaComoFeita(aulaSelecionada)}
+                onPress={() => marcarAulaComoFeita(aulaAtual)}
               >
                 <Text style={estilos.textoBotao}>Marcar como concluída</Text>
               </TouchableOpacity>
@@ -235,5 +241,7 @@ const estilos = StyleSheet.create({
   botaoTreino: { backgroundColor: CORES.primaria },
   textoBotao: { color: CORES.branco, fontWeight: 'bold', fontSize: 14 },
   concluidoContainer: { backgroundColor: CORES.sucessoFundo, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
+  botaoDesmarcar: { alignSelf: 'stretch', backgroundColor: CORES.branco, borderRadius: 10, paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  textoBotaoDesmarcar: { color: CORES.primaria, fontWeight: 'bold', fontSize: 14, textAlign: 'center' },
   textoConcluido: { color: CORES.sucesso, fontWeight: 'bold', fontSize: 15 },
 });

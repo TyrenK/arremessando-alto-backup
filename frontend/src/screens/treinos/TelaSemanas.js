@@ -11,7 +11,6 @@ const MAXIMO_SEMANAS = 20;
 
 export default function TelaSemanas({ navigation }) {
   const [semanas, setSemanas] = useState([]);
-  const [progresso, setProgresso] = useState(null);
   const [carregando, setCarregando] = useState(true);
 
   useFocusEffect(
@@ -23,9 +22,6 @@ export default function TelaSemanas({ navigation }) {
   async function carregarDados() {
     setCarregando(true);
     try {
-      const resProgresso = await api.get('/aulas/progresso');
-      setProgresso(resProgresso.data);
-
       const listaSemanas = [];
 
       for (let semanaAtual = 1; semanaAtual <= MAXIMO_SEMANAS; semanaAtual++) {
@@ -35,6 +31,7 @@ export default function TelaSemanas({ navigation }) {
           id: semanaAtual,
           nome: `Semana ${semanaAtual}`,
           totalAulas: res.data.length,
+          aulasConcluidas: res.data.filter((a) => a.conclusao).length,
         });
       }
 
@@ -46,13 +43,17 @@ export default function TelaSemanas({ navigation }) {
     }
   }
 
-  function semanaCompleta(id) {
-    return progresso && progresso.semana_ult_aula > id;
+  // Semana completa = todas as aulas dela concluídas pelo jogador.
+  function semanaCompleta(semana) {
+    return semana.totalAulas > 0 && semana.aulasConcluidas === semana.totalAulas;
   }
 
-  function semanaAtiva(id) {
-    if (!progresso) return id === 1;
-    return progresso.semana_ult_aula === id;
+  // Em andamento = semana com aulas feitas e outras pendentes, ou a primeira
+  // semana ainda não completa (a próxima a fazer).
+  function semanaAtiva(semana) {
+    if (semanaCompleta(semana)) return false;
+    const primeiraPendente = semanas.find((s) => !semanaCompleta(s));
+    return semana.aulasConcluidas > 0 || semana.id === primeiraPendente?.id;
   }
 
   return (
@@ -70,8 +71,8 @@ export default function TelaSemanas({ navigation }) {
             <Text style={estilos.textoVazio}>Nenhum treino disponível ainda.</Text>
           ) : (
             semanas.map((semana) => {
-              const completa = semanaCompleta(semana.id);
-              const ativa = semanaAtiva(semana.id);
+              const completa = semanaCompleta(semana);
+              const ativa = semanaAtiva(semana);
               return (
                 <TouchableOpacity
                   key={semana.id}
@@ -83,7 +84,9 @@ export default function TelaSemanas({ navigation }) {
                     {completa && <Text style={estilos.badge}>✓ Concluída</Text>}
                     {ativa && <Text style={[estilos.badge, estilos.badgeAtiva]}>Em andamento</Text>}
                   </View>
-                  <Text style={estilos.subtituloSemana}>{semana.totalAulas} aulas</Text>
+                  <Text style={estilos.subtituloSemana}>
+                    {semana.aulasConcluidas}/{semana.totalAulas} aulas concluídas
+                  </Text>
                 </TouchableOpacity>
               );
             })
