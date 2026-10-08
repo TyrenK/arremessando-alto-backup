@@ -3,9 +3,9 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Image,
   FlatList, ActivityIndicator, Alert, ScrollView
 } from 'react-native';
-import YoutubePlayer from 'react-native-youtube-iframe';
 import GradientWrapper from '../../components/GradientWrapper';
 import NavegacaoInferior from '../../components/NavegacaoInferior';
+import estilosGlobais from '../../styles/styles';
 import api from '../../config/api';
 import CORES from '../../styles/cores';
 
@@ -41,7 +41,7 @@ export default function TelaTreino({ route, navigation }) {
     if (!progresso) return false;
     if (progresso.semana_ult_aula > semana) return true;
     if (progresso.semana_ult_aula === semana) {
-      return progresso.ult_aula_realizada >= numeroAula;
+      return progresso.ult_aula_realizada === numeroAula;
     }
     return false;
   }
@@ -68,12 +68,10 @@ export default function TelaTreino({ route, navigation }) {
     }
   }
 
-  // Definida fora do return para evitar recriação desnecessária
   const renderAula = useCallback(({ item }) => {
     const feita = aulaRealizada(item.numero_aula);
 
     return (
-
       <TouchableOpacity
         style={[estilos.caixaDia, feita && estilos.caixaFeita]}
         onPress={() => setAulaSelecionada(item)}
@@ -85,7 +83,7 @@ export default function TelaTreino({ route, navigation }) {
             {!!item.titulo && <Text style={estilos.tituloAula}>{item.titulo}</Text>}
           </View>
           <View style={estilos.icones}>
-            {!!item.youtube_id && <Text style={estilos.iconeVideo}>▶</Text>}
+            {!!item.gif_url && <Text style={estilos.iconeGif}>GIF</Text>}
             {!!feita && <Text style={estilos.iconeFeito}>✓</Text>}
             <Text style={estilos.setinha}>›</Text>
           </View>
@@ -97,6 +95,7 @@ export default function TelaTreino({ route, navigation }) {
   // ── TELA DE DETALHE DA AULA ──────────────────────────────────────────────────
   if (aulaSelecionada) {
     const feita = aulaRealizada(aulaSelecionada.numero_aula);
+    const tituloTreino = `Treino Semana ${semana} - Aula ${aulaSelecionada.numero_aula}`;
 
     return (
       <GradientWrapper style={estilos.tela}>
@@ -110,11 +109,9 @@ export default function TelaTreino({ route, navigation }) {
             {aulaSelecionada.titulo || `Dia ${aulaSelecionada.dia} — Aula ${aulaSelecionada.numero_aula}`}
           </Text>
 
-          {!!aulaSelecionada.pratica && (
-            <View style={estilos.badgePratica}>
-              <Text style={estilos.textoBadge}>🏀 Aula prática</Text>
-            </View>
-          )}
+          <View style={estilos.badgePratica}>
+            <Text style={estilos.textoBadge}>🏀 Aula prática</Text>
+          </View>
 
           {aulaSelecionada.gif_url ? (
             <View style={estilos.gifContainer}>
@@ -124,16 +121,11 @@ export default function TelaTreino({ route, navigation }) {
                 resizeMode="contain"
               />
             </View>
-          ) : null}
-
-          {aulaSelecionada.youtube_id ? (
-            <View style={estilos.playerContainer}>
+          ) : (
+            <View style={estilos.semConteudo}>
+              <Text style={estilos.textoSemConteudo}>GIF em breve</Text>
             </View>
-          ) : !aulaSelecionada.gif_url ? (
-            <View style={estilos.semVideo}>
-              <Text style={estilos.textoSemVideo}>Vídeo/GIF em breve</Text>
-            </View>
-          ) : null}
+          )}
 
           <View style={estilos.descricaoContainer}>
             <Text style={estilos.labelDescricao}>Sobre esta aula</Text>
@@ -147,12 +139,26 @@ export default function TelaTreino({ route, navigation }) {
               <Text style={estilos.textoConcluido}>✓ Aula concluída</Text>
             </View>
           ) : (
-            <TouchableOpacity
-              style={estilos.botaoConcluir}
-              onPress={() => marcarAulaComoFeita(aulaSelecionada)}
-            >
-              <Text style={estilos.textoBotao}>Marcar como concluída</Text>
-            </TouchableOpacity>
+            <View style={estilos.rowBotoes}>
+              <TouchableOpacity
+                style={[estilos.botao, estilos.botaoConcluir]}
+                onPress={() => marcarAulaComoFeita(aulaSelecionada)}
+              >
+                <Text style={estilos.textoBotao}>Marcar como concluída</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[estilos.botao, estilos.botaoTreino]}
+                onPress={() =>
+                  navigation.navigate('TelaConfigurarTreino', {
+                    tituloPreenchido: tituloTreino,
+                    aoFinalizar: () => setAulaSelecionada(aulaSelecionada),
+                  })
+                }
+              >
+                <Text style={estilos.textoBotao}>Iniciar treino</Text>
+              </TouchableOpacity>
+            </View>
           )}
 
         </ScrollView>
@@ -164,15 +170,15 @@ export default function TelaTreino({ route, navigation }) {
   // ── LISTA DE AULAS DA SEMANA ─────────────────────────────────────────────────
   return (
     <GradientWrapper style={estilos.tela}>
-      <View style={estilos.conteudo}>
-        <TouchableOpacity
-          style={estilos.btnVoltarSemana}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={estilos.txtVoltarSemana}>← Voltar</Text>
+      <View style={estilosGlobais.cabecalho}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={estilos.txtVoltarSemana}>←</Text>
         </TouchableOpacity>
+        <Text style={estilosGlobais.titulo}>Semana {semana}</Text>
+        <View style={estilos.espacador} />
+      </View>
 
-        <Text style={estilos.titulo}>Semana {semana}</Text>
+      <View style={estilos.conteudo}>
         {carregando ? (
           <ActivityIndicator size="large" color={CORES.branco} style={estilos.loading} />
         ) : aulas.length === 0 ? (
@@ -194,11 +200,10 @@ export default function TelaTreino({ route, navigation }) {
 
 const estilos = StyleSheet.create({
   tela: { flex: 1 },
-  conteudo: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
+  conteudo: { flex: 1, paddingHorizontal: 20 },
   loading: { marginTop: 40 },
-  btnVoltarSemana: { marginBottom: 10 },
-  txtVoltarSemana: { color: CORES.branco, fontSize: 15, fontWeight: 'bold' },
-  titulo: { fontSize: 24, color: CORES.branco, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  txtVoltarSemana: { color: CORES.branco, fontSize: 22, fontWeight: 'bold', paddingHorizontal: 4 },
+  espacador: { width: 30 },
   listaConteudo: { paddingBottom: 20 },
   caixaDia: { backgroundColor: CORES.branco, padding: 20, borderRadius: 10, marginBottom: 10 },
   caixaFeita: { backgroundColor: CORES.sucessoFundo, borderLeftWidth: 4, borderLeftColor: CORES.sucesso },
@@ -207,7 +212,7 @@ const estilos = StyleSheet.create({
   textoDia: { fontSize: 16, fontWeight: 'bold' },
   tituloAula: { fontSize: 13, color: CORES.textoDesabilitado, marginTop: 3 },
   icones: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  iconeVideo: { color: CORES.primaria, fontSize: 14, fontWeight: 'bold' },
+  iconeGif: { color: '#9C27B0', fontSize: 11, fontWeight: 'bold', backgroundColor: '#F3E5F5', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4 },
   iconeFeito: { color: CORES.sucesso, fontSize: 16, fontWeight: 'bold' },
   setinha: { fontSize: 20, color: CORES.cinzaMedio, marginLeft: 4 },
   textoVazio: { color: CORES.branco, textAlign: 'center', marginTop: 40, fontSize: 16, fontStyle: 'italic' },
@@ -217,16 +222,18 @@ const estilos = StyleSheet.create({
   detalheTitulo: { fontSize: 22, color: CORES.branco, fontWeight: 'bold', marginBottom: 12 },
   badgePratica: { backgroundColor: '#FFF3E0', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', marginBottom: 14 },
   textoBadge: { fontSize: 12, color: '#E65100', fontWeight: 'bold' },
-  gifContainer: { backgroundColor: CORES.branco, borderRadius: 12, overflow: 'hidden', marginBottom: 20, alignItems: 'center', justifyContent: 'center', padding: 10 },
+  gifContainer: { backgroundColor: CORES.branco, borderRadius: 12, overflow: 'hidden', marginBottom: 20, alignItems: 'center', padding: 10 },
   gif: { width: '100%', height: 220 },
-  playerContainer: { borderRadius: 12, overflow: 'hidden', marginBottom: 20 },
-  semVideo: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, height: 120, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  textoSemVideo: { color: CORES.branco, fontSize: 15 },
+  semConteudo: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, height: 120, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  textoSemConteudo: { color: CORES.branco, fontSize: 15 },
   descricaoContainer: { backgroundColor: CORES.branco, borderRadius: 12, padding: 18, marginBottom: 20 },
   labelDescricao: { fontSize: 14, fontWeight: 'bold', color: CORES.primaria, marginBottom: 8 },
   textoDescricao: { fontSize: 14, color: CORES.textoMedio, lineHeight: 22 },
-  botaoConcluir: { backgroundColor: CORES.primaria, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-  textoBotao: { color: CORES.branco, fontWeight: 'bold', fontSize: 15 },
+  rowBotoes: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  botao: { flex: 1, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+  botaoConcluir: { backgroundColor: CORES.sucesso },
+  botaoTreino: { backgroundColor: CORES.primaria },
+  textoBotao: { color: CORES.branco, fontWeight: 'bold', fontSize: 14 },
   concluidoContainer: { backgroundColor: CORES.sucessoFundo, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
   textoConcluido: { color: CORES.sucesso, fontWeight: 'bold', fontSize: 15 },
 });

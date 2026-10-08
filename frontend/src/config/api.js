@@ -2,7 +2,7 @@ import axios from 'axios';
 import { pegarToken } from './storage';
 
 const api = axios.create({
-  baseURL: 'http://192.168.0.5:3000',
+  baseURL: 'http://172.17.1.197:3000',
 });
 
 api.interceptors.request.use(async (config) => {

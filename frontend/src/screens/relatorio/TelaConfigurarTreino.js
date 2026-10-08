@@ -6,8 +6,12 @@ import estilosGlobais from '../../styles/styles';
 import NavegacaoInferior from '../../components/NavegacaoInferior';
 import CORES from '../../styles/cores';
 
-export default function TelaConfigurarTreino({ navigation }) {
-  const [titulo, setTitulo] = useState('');
+export default function TelaConfigurarTreino({ navigation, route }) {
+  // Se veio da aula, título já vem preenchido e temos callback de retorno
+  const tituloInicial = route.params?.tituloPreenchido || '';
+  const aoFinalizar = route.params?.aoFinalizar || null;
+
+  const [titulo, setTitulo] = useState(tituloInicial);
   const [arremessos, setArremessos] = useState('');
   const [tempo, setTempo] = useState('');
 
@@ -18,6 +22,7 @@ export default function TelaConfigurarTreino({ navigation }) {
       titulo,
       totalArremessos: parseInt(arremessos),
       totalTempo: parseInt(tempo),
+      aoFinalizar,
     });
   };
 

@@ -16,7 +16,7 @@ const { mqttHost, mqttPort, mqttPath, mqttUser, mqttPass } =
   Constants.expoConfig.extra;
 
 export default function TelaTreinoAtivo({ navigation, route }) {
-  const { titulo, totalArremessos, totalTempo } = route.params;
+  const { titulo, totalArremessos, totalTempo, aoFinalizar } = route.params;
 
   const [isConnected, setIsConnected] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -117,12 +117,17 @@ export default function TelaTreinoAtivo({ navigation, route }) {
         tempo,
         titulo,
       });
-    } catch (erro) {
-      // Silencia o erro mas continua a navegação
-    }
+    } catch (erro) {}
 
     setShowEndModal(false);
-    navigation.navigate('TelaHistoricoTreinos');
+
+    // Se veio de uma aula, volta para ela. Senão vai para o histórico.
+    if (aoFinalizar) {
+      navigation.goBack();
+      navigation.goBack();
+    } else {
+      navigation.navigate('TelaHistoricoTreinos');
+    }
   };
 
   const porcentagemAcertos = totalArremessos > 0
@@ -146,7 +151,6 @@ export default function TelaTreinoAtivo({ navigation, route }) {
           {acertos} / {totalArremessos} acertos
         </Text>
 
-        {/* Indicador de conexão com o sensor */}
         <View style={estilos.statusConexao}>
           <View style={[estilos.bolinha, { backgroundColor: isConnected ? CORES.sucesso : CORES.aviso }]} />
           <Text style={estilos.textoConexao}>
@@ -182,7 +186,7 @@ export default function TelaTreinoAtivo({ navigation, route }) {
                   Parabéns! Você completou todos os {totalArremessos} arremessos com {acertos} acertos.
                 </Text>
                 <TouchableOpacity style={estilos.btnConfirmar} onPress={() => salvarSessao(totalArremessos)}>
-                  <Text style={estilos.textoBotao}>Salvar e ver histórico</Text>
+                  <Text style={estilos.textoBotao}>Salvar</Text>
                 </TouchableOpacity>
               </>
             ) : (

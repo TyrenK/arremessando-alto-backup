@@ -16,7 +16,7 @@ async function listarAulasPorSemana(req, res) {
         numero_aula,
         titulo,
         explicacao,
-        pratica,
+        conclusao,
         gif_url
        FROM Aulas
        WHERE semana = ?

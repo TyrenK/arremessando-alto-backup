@@ -31,7 +31,14 @@ export default function App() {
           <Stack.Screen name="TelaCadastro" component={TelaCadastro} />
           <Stack.Screen name="TelaFormulario" component={TelaFormulario} />
           <Stack.Screen name="TelaSemanas" component={TelaSemanas} />
-          <Stack.Screen name="TelaTreino" component={TelaTreino} />
+
+          {/* TelaTreino com animação slide para combinar com o goBack() */}
+          <Stack.Screen
+            name="TelaTreino"
+            component={TelaTreino}
+            options={{ animation: 'slide_from_right' }}
+          />
+
           <Stack.Screen name="TelaPerfil" component={TelaPerfil} />
           <Stack.Screen name="TelaPerfilEdicao" component={TelaPerfilEdicao} />
           <Stack.Screen name="TelaHistoricoTreinos" component={TelaHistoricoTreinos} />

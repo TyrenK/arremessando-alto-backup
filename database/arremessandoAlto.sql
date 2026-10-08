@@ -18,7 +18,7 @@ CREATE TABLE ProgressoAula (
 -- Dados do jogador
 CREATE TABLE Jogador (
     id_jogador INT PRIMARY KEY AUTO_INCREMENT,
-    foto_url VARCHAR(500) NULL;
+    foto_url VARCHAR(500) NULL,
     email VARCHAR(50) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(100) NOT NULL,
@@ -31,16 +31,15 @@ CREATE TABLE Jogador (
     FOREIGN KEY (id_prog_aula) REFERENCES ProgressoAula(id_prog_aula)
 );
 
--- Aulas do curso com suporte a vídeo do YouTube
 CREATE TABLE Aulas (
     id_aula INT PRIMARY KEY AUTO_INCREMENT,
-    gif_url VARCHAR(500) NULL;
+    gif_url VARCHAR(500) NULL,
     semana INT NOT NULL,
     dia INT NOT NULL,
     numero_aula INT NOT NULL,
     titulo VARCHAR(100),
     explicacao VARCHAR(1000),
-    pratica BOOLEAN DEFAULT FALSE,
+    conclusao BOOLEAN DEFAULT FALSE
 );
 
 -- Registros de aproveitamento dos treinos
