@@ -2,7 +2,29 @@ import React, { useEffect } from 'react';
 import { Text, Image, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import GradientWrapper from '../../components/GradientWrapper';
-import { pegarToken } from '../../config/storage';
+import api from '../../config/api';
+import { pegarToken, limparSessao } from '../../config/storage';
+
+// Descobre para onde ir ao abrir o app (ou dar F5):
+// sem token ou token recusado pelo servidor -> login; senão, direto para dentro do app.
+async function descobrirTelaInicial() {
+  const token = await pegarToken();
+  if (!token) return 'TelaLogin';
+
+  try {
+    // Valida o token no servidor e já traz o nome atualizado
+    const { data } = await api.get('/jogador/perfil');
+    return data.nome === 'Novo Jogador' ? 'TelaFormulario' : 'TelaSemanas';
+  } catch (erro) {
+    if (erro.response?.status === 401 || erro.response?.status === 404) {
+      // Token expirado/inválido ou jogador não existe mais: limpa e pede login
+      await limparSessao();
+      return 'TelaLogin';
+    }
+    // Sem conexão / servidor fora: mantém a sessão e entra no app
+    return 'TelaSemanas';
+  }
+}
 
 // Tela de animação de entrada do app
 export default function TelaAnimacao({ navigation }) {
@@ -23,20 +45,15 @@ export default function TelaAnimacao({ navigation }) {
       easing: Easing.out(Easing.exp),
     });
 
-    // Após 2 segundos, se já existir um token salvo, entra direto no app
-    const temporizador = setTimeout(async () => {
-      try {
-        const token = await pegarToken();
-        if (token) {
-          navigation.replace('TelaSemanas');
-          return;
-        }
-      } catch (e) {}
+    // Espera a animação (2s) e a verificação da sessão terminarem, então navega
+    let cancelado = false;
+    const espera = new Promise((resolve) => setTimeout(resolve, 2000));
 
-      navigation.replace('TelaLogin');
-    }, 2000);
+    Promise.all([descobrirTelaInicial(), espera]).then(([tela]) => {
+      if (!cancelado) navigation.reset({ index: 0, routes: [{ name: tela }] });
+    });
 
-    return () => clearTimeout(temporizador);
+    return () => { cancelado = true; };
   }, [navigation]);
 
   const estiloAnimado = useAnimatedStyle(() => ({

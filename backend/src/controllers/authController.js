@@ -33,6 +33,7 @@ async function cadastrar(req, res) {
     return res.status(201).json({ mensagem: "Jogador cadastrado com sucesso!" });
 
   } catch (error) {
+    console.error("Erro ao cadastrar jogador:", error);
     return res.status(500).json({ mensagem: "Erro interno no servidor." });
   }
 }
@@ -77,6 +78,7 @@ async function login(req, res) {
       },
     });
   } catch (error) {
+    console.error("Erro no login:", error);
     return res.status(500).json({ mensagem: "Erro interno no servidor." });
   }
 }

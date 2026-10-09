@@ -176,12 +176,15 @@ export default function TelaTreino({ route, navigation }) {
   // ── LISTA DE AULAS DA SEMANA ─────────────────────────────────────────────────
   return (
     <GradientWrapper style={estilos.tela}>
-      <View style={estilosGlobais.cabecalho}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={estilos.txtVoltarSemana}>←</Text>
+      <View style={estilos.cabecalhoLista}>
+        <TouchableOpacity
+          style={estilos.btnVoltarLista}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
+        >
+          <Text style={estilos.txtVoltar}>← Voltar</Text>
         </TouchableOpacity>
         <Text style={estilosGlobais.titulo}>Semana {semana}</Text>
-        <View style={estilos.espacador} />
       </View>
 
       <View style={estilos.conteudo}>
@@ -208,8 +211,8 @@ const estilos = StyleSheet.create({
   tela: { flex: 1 },
   conteudo: { flex: 1, paddingHorizontal: 20 },
   loading: { marginTop: 40 },
-  txtVoltarSemana: { color: CORES.branco, fontSize: 22, fontWeight: 'bold', paddingHorizontal: 4 },
-  espacador: { width: 30 },
+  cabecalhoLista: { paddingTop: 60, paddingHorizontal: 25, marginBottom: 20 },
+  btnVoltarLista: { alignSelf: 'flex-start', paddingVertical: 10, marginBottom: 6 },
   listaConteudo: { paddingBottom: 20 },
   caixaDia: { backgroundColor: CORES.branco, padding: 20, borderRadius: 10, marginBottom: 10 },
   caixaFeita: { backgroundColor: CORES.sucessoFundo, borderLeftWidth: 4, borderLeftColor: CORES.sucesso },
