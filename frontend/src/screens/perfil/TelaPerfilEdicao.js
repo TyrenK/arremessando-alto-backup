@@ -6,6 +6,7 @@ import GradientWrapper from '../../components/GradientWrapper';
 import estilosGlobais from '../../styles/styles';
 import api from '../../config/api';
 import CORES from '../../styles/cores';
+import { dataValida } from '../../utils/ValidarData';
 
 export default function TelaPerfilEdicao({ navigation, route }) {
   const jogadorAtual = route.params?.jogador || {};
@@ -84,6 +85,11 @@ export default function TelaPerfilEdicao({ navigation, route }) {
       return;
     }
 
+    if (dataNascimento && !dataValida(dataNascimento)) {
+      Alert.alert('Atenção', 'Data de nascimento inválida. Use DD/MM/AAAA com uma data real.');
+      return;
+    }
+
     setCarregando(true);
     try {
       await api.put('/jogador/perfil', {
@@ -92,9 +98,9 @@ export default function TelaPerfilEdicao({ navigation, route }) {
         data_nascimento: dataNascimento ? formatarData(dataNascimento) : null,
       });
 
-      Alert.alert('Sucesso!', 'Perfil atualizado!', [
-        { text: 'OK', onPress: () => navigation.navigate('TelaPerfil') }
-      ]);
+      // Volta direto pro perfil (a TelaPerfil recarrega os dados ao ganhar foco).
+      // Não depende de Alert com botão, pois no navegador (web) o callback do botão não executa.
+      navigation.navigate('TelaPerfil');
     } catch (erro) {
       const msg = erro.response?.data?.mensagem || 'Erro ao salvar alterações.';
       Alert.alert('Erro', msg);

@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { emailFormatoValido, dominioRecebeEmail } = require("../utils/validacoes");
 require("dotenv").config();
 
 async function cadastrar(req, res) {
@@ -8,6 +9,16 @@ async function cadastrar(req, res) {
 
   if (!email || !senha) {
     return res.status(400).json({ mensagem: "Email e senha são obrigatórios." });
+  }
+
+  if (!emailFormatoValido(email)) {
+    return res.status(400).json({ mensagem: "Digite um email válido." });
+  }
+
+  if (!(await dominioRecebeEmail(email))) {
+    return res.status(400).json({
+      mensagem: "O domínio desse email não existe ou não recebe mensagens. Verifique se digitou corretamente.",
+    });
   }
 
   try {

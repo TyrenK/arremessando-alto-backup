@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const cloudinary = require("../config/cloudinary");
+const { emailFormatoValido, dominioRecebeEmail, dataNascimentoValida } = require("../utils/validacoes");
 
 async function buscarPerfil(req, res) {
   const id_jogador = req.jogador.id_jogador;
@@ -33,6 +34,22 @@ async function buscarPerfil(req, res) {
 async function atualizarPerfil(req, res) {
   const id_jogador = req.jogador.id_jogador;
   const { nome, email, data_nascimento } = req.body;
+
+  if (email) {
+    if (!emailFormatoValido(email)) {
+      return res.status(400).json({ mensagem: "Digite um email válido." });
+    }
+
+    if (!(await dominioRecebeEmail(email))) {
+      return res.status(400).json({
+        mensagem: "O domínio desse email não existe ou não recebe mensagens. Verifique se digitou corretamente.",
+      });
+    }
+  }
+
+  if (data_nascimento && !dataNascimentoValida(data_nascimento)) {
+    return res.status(400).json({ mensagem: "Data de nascimento inválida." });
+  }
 
   try {
     await db.query("CALL AtualizarDadosJogador(?, ?, ?, ?)", [

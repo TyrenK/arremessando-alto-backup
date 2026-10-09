@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import GradientWrapper from '../../components/GradientWrapper';
 import api from '../../config/api';
 import { pegarJogador } from '../../config/storage';
 import CORES from '../../styles/cores';
+import { dataValida } from '../../utils/ValidarData';
 
 const schema = yup.object({
   nome: yup
@@ -15,6 +16,7 @@ const schema = yup.object({
   dataNascimento: yup
     .string()
     .matches(/^\d{2}\/\d{2}\/\d{4}$/, 'Use o formato DD/MM/AAAA.')
+    .test('data-valida', 'Data de nascimento inválida.', (valor) => !valor || dataValida(valor))
     .nullable(),
   experiencia: yup
     .string()
@@ -40,23 +42,27 @@ export default function TelaFormulario({ navigation }) {
   const [aberto, setAberto] = useState(false);
 
   async function enviarFormulario(valores) {
-    const jogadorSalvo = await pegarJogador();
+    try {
+      const jogadorSalvo = await pegarJogador();
 
-    let dataFormatada = null;
-    if (valores.dataNascimento && valores.dataNascimento.length === 10) {
-      const partes = valores.dataNascimento.split('/');
-      dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
+      let dataFormatada = null;
+      if (valores.dataNascimento && valores.dataNascimento.length === 10) {
+        const partes = valores.dataNascimento.split('/');
+        dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
+      }
+
+      await api.put('/jogador/perfil', {
+        nome: valores.nome,
+        email: jogadorSalvo?.email || '',
+        data_nascimento: dataFormatada,
+      });
+
+      await api.put('/jogador/experiencia', { exp_basq: valores.experiencia });
+
+      navigation.navigate('TelaSemanas');
+    } catch (erro) {
+      Alert.alert('Erro', erro.response?.data?.mensagem || 'Não foi possível salvar o formulário.');
     }
-
-    await api.put('/jogador/perfil', {
-      nome: valores.nome,
-      email: jogadorSalvo?.email || '',
-      data_nascimento: dataFormatada,
-    });
-
-    await api.put('/jogador/experiencia', { exp_basq: valores.experiencia });
-
-    navigation.navigate('TelaSemanas');
   }
 
   return (
